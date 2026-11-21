@@ -509,7 +509,17 @@ def build(script, speed="slow", timings=None, min_total=0.0):
     return scenes, chunks, total
 
 
+def utf8_console():
+    """คอนโซล Windows (cp874/cp1252) พิมพ์ภาษาไทยและสัญลักษณ์ ✔ ⚠ ไม่ได้เมื่อ output ถูก pipe: บังคับ UTF-8"""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
+
 def main(argv=None):
+    utf8_console()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("script")
     ap.add_argument("--speed", default="slow", choices=list(CPS))

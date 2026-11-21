@@ -403,10 +403,18 @@ def slug(s):
     return s[:30] or "clip"
 
 
+def ff_filter_path(p):
+    """path สำหรับใส่ในตัวเลือก filter ของ ffmpeg (เช่น ass=) ให้ใช้ได้ทั้ง Windows และ Linux:
+    ใช้ / แทน \\ และ escape ':' ของชื่อไดรฟ์ (D:) กับ ' ไม่งั้น ffmpeg อ่าน D: เป็นตัวคั่นตัวเลือก"""
+    p = os.path.abspath(p).replace("\\", "/")
+    # ระดับ 2 (ตัวเลือก filter): \\: และ \\' ; ระดับ 1 (อยู่ใน '...'): ปิด quote แล้วใส่ \\' ก่อนเปิดใหม่
+    return p.replace(":", "\\:").replace("'", "\\'\\''")
+
+
 def concat(segs, out):
     lst = out + ".txt"
-    with open(lst, "w") as fh:
-        fh.write("".join(f"file '{p}'\n" for p in segs))
+    with open(lst, "w", encoding="utf-8") as fh:
+        fh.write("".join(f"file '{os.path.abspath(p).replace(os.sep, '/')}'\n" for p in segs))
     run(["ffmpeg", "-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", lst, "-c", "copy", out])
 
 
@@ -472,7 +480,7 @@ def render_clip(project, ci, clip, fmt, outdir, fps, font):
             vol = 0.18 if voice else 0.55  # เพลงต่ำกว่าเสียงพูด ~-15 dB เมื่อมีพากย์
             tracks.append((f"[{n}:a]aresample=44100,volume={vol},afade=t=out:st={max(0, total - 2):.2f}:d=2", "[m]"))
             n += 1
-        sub = f"ass='{ass_path}'" + (f":fontsdir='{bs.FONTS_DIR}'" if os.path.isdir(bs.FONTS_DIR) else "")
+        sub = f"ass='{ff_filter_path(ass_path)}'" + (f":fontsdir='{ff_filter_path(bs.FONTS_DIR)}'" if os.path.isdir(bs.FONTS_DIR) else "")
         fc = f"[0:v]{sub}[vo]"
         if tracks:
             if len(tracks) == 1:
@@ -491,6 +499,7 @@ def render_clip(project, ci, clip, fmt, outdir, fps, font):
 
 
 def main(argv=None):
+    bs.utf8_console()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("project")
     ap.add_argument("--out", default="out")

@@ -2,51 +2,60 @@
 <html lang="th">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>สตูดิโอคลิปเล่าเรื่อง</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;800&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
 <style>
+/* เลย์เอาต์: ฟอร์มกรอกครั้งเดียวทางซ้าย การ์ดคลิปทางขวา · โทนหมึกกรมท่า เหลือง และป้ายกระดาษแบบสารคดีคอลลาจ */
 :root{
-  --bg:#f6f3fb; --panel:#ffffff; --ink:#221c33; --muted:#6c6580; --line:#e4deef;
-  --accent:#7b5cff; --accent-ink:#ffffff; --accent-soft:#efe9ff; --warn:#b4560f;
+  --bg:#eef0f5; --panel:#ffffff; --ink:#1b2140; --muted:#59617f; --line:#d9deea; --input-bg:#f7f8fb;
+  --accent:#f2b21b; --accent-ink:#1b2140; --accent-soft:#fff1c7; --focus:#1f2a5c; --warn:#a8460c;
+  --tag-bg:#e6eaf6; --tag-ink:#1f2a5c; --label-bg:#ffffff; --label-ink:#121212; --label-shadow:#121212;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#12101b; --panel:#1c1929; --ink:#f1edfb; --muted:#a69fbd; --line:#2f2a42;
-    --accent:#9c85ff; --accent-ink:#12101b; --accent-soft:#2a2440; --warn:#f0a35e;
+    --bg:#0f1220; --panel:#171c2e; --ink:#eef1f8; --muted:#a1a9c4; --line:#2a3150; --input-bg:#11152a;
+    --accent:#f2b21b; --accent-ink:#16141c; --accent-soft:#3a3013; --focus:#f2b21b; --warn:#f0a35e;
+    --tag-bg:#232a45; --tag-ink:#cfd8ff; --label-bg:#ffffff; --label-ink:#121212; --label-shadow:#f2b21b;
+    color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#12101b; --panel:#1c1929; --ink:#f1edfb; --muted:#a69fbd; --line:#2f2a42;
-  --accent:#9c85ff; --accent-ink:#12101b; --accent-soft:#2a2440; --warn:#f0a35e;
+  --bg:#0f1220; --panel:#171c2e; --ink:#eef1f8; --muted:#a1a9c4; --line:#2a3150; --input-bg:#11152a;
+  --accent:#f2b21b; --accent-ink:#16141c; --accent-soft:#3a3013; --focus:#f2b21b; --warn:#f0a35e;
+  --tag-bg:#232a45; --tag-ink:#cfd8ff; --label-bg:#ffffff; --label-ink:#121212; --label-shadow:#f2b21b;
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Sarabun",system-ui,sans-serif}
 h1,h2,h3,button,label,select,.tag,summary{font-family:"Kanit",system-ui,sans-serif}
-header{padding:20px 16px 8px;max-width:1400px;margin:auto}
-header h1{margin:0;font-size:26px;font-weight:800}
+header{padding-block:20px 8px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));max-width:1400px;margin:auto}
+header h1{margin:0;font-size:26px;font-weight:800;text-wrap:balance}
+.h-label{display:inline-block;background:var(--label-bg);color:var(--label-ink);padding:0 .35em;margin-right:.25em;box-shadow:.12em .12em 0 var(--label-shadow);transform:rotate(-1.5deg)}
 header p{margin:4px 0 0;color:var(--muted)}
-main{display:grid;grid-template-columns:minmax(300px,390px) 1fr;gap:18px;max-width:1400px;margin:auto;padding:12px 16px 40px}
+main{display:grid;grid-template-columns:minmax(300px,390px) 1fr;gap:18px;max-width:1400px;margin:auto;padding-block:12px 40px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
 @media (max-width:900px){main{grid-template-columns:1fr}}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
 .form{position:sticky;top:12px;align-self:start;max-height:calc(100vh - 24px);overflow:auto}
 @media (max-width:900px){.form{position:static;max-height:none}}
 label{display:block;font-size:13.5px;font-weight:600;margin:12px 0 4px}
 label small{font-weight:400;color:var(--muted);font-family:"Sarabun"}
-input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);font:inherit}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--input-bg);color:var(--ink);font:inherit}
 textarea{resize:vertical}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 button{cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:9px;padding:8px 12px;font-size:14px;font-weight:600}
-button:hover{border-color:var(--accent)}
+button:hover{border-color:var(--focus)}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 button:disabled{opacity:.5;cursor:not-allowed}
 button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);width:100%;padding:12px;font-size:16px;margin-top:16px}
 .hint{font-size:12.5px;color:var(--muted);margin:6px 0 0}
 #clips{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,540px),1fr));gap:18px;align-content:start}
 .empty{color:var(--muted);text-align:center;padding:60px 20px;border:2px dashed var(--line);border-radius:14px}
 .clip h2{font-size:18px;margin:0 0 2px}
-.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent);margin:0 4px 4px 0}
+.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--tag-bg);color:var(--tag-ink);margin:0 4px 4px 0}
 .stage{display:grid;grid-template-columns:auto 1fr;gap:14px;margin-top:10px}
 .stage.horiz{grid-template-columns:1fr}
 @media (max-width:640px){.stage{grid-template-columns:1fr}}
@@ -68,23 +77,30 @@ summary{cursor:pointer;font-weight:600;font-size:14px}
 .progress i{display:block;height:100%;width:0;background:var(--accent)}
 .legend{font-size:12.5px;color:var(--muted);line-height:1.8}
 .legend kbd{font-family:inherit;background:var(--accent-soft);padding:0 5px;border-radius:4px;color:var(--ink)}
-.sync{position:fixed;inset:auto 0 0 0;background:var(--panel);border-top:2px solid var(--accent);padding:14px 16px;display:none;z-index:9}
+.sync{position:fixed;inset:auto 0 0 0;background:var(--panel);border-top:2px solid var(--accent);padding-top:14px;padding-bottom:calc(14px + env(safe-area-inset-bottom, 0px));padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:none;z-index:9}
 .sync.on{display:block}
 .sync .now{font:800 28px "Kanit";margin:4px 0}
 .sync .next{color:var(--muted)}
 .sync .bar{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .sync .bar button.big{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);padding:12px 22px;font-size:16px}
 .bulk{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-.status{font-size:13px;color:var(--muted);margin-top:8px;min-height:1.4em}
+.status{font-size:13px;color:var(--muted);min-height:1.4em;flex:1;min-width:0}
+.status-row{display:flex;gap:8px;align-items:center;margin-top:8px}
+.status-row button{font-size:13px;padding:5px 10px}
+.example-note{margin:0 0 4px;padding:8px 10px;border-radius:9px;background:var(--accent-soft);color:var(--ink);font-size:13px}
+body.in-viewer [data-a="rec"]{display:none}
+body.no-downloads [data-a="export"],body.no-downloads [data-a="exportBoth"],body.no-downloads [data-a="srt"],
+body.no-downloads #dlProject,body.no-downloads #dlAllSrt,body.no-downloads #dlAllScripts{display:none}
 </style>
 </head>
 <body>
 <header>
-  <h1>สตูดิโอคลิปเล่าเรื่อง</h1>
+  <h1><span class="h-label">สตูดิโอ</span>คลิปเล่าเรื่อง</h1>
   <p>กรอกข้อมูลครั้งเดียว ได้คลิป 1–5 คลิป พร้อมสคริปต์ที่เว้นจังหวะเล่นอารมณ์ ซับไทยคำต่อคำ เพลง และไฟล์วิดีโอทั้งแนวตั้งและแนวนอน</p>
 </header>
 <main>
 <section class="panel form" aria-label="ข้อมูลคลิป">
+  <p class="example-note" id="exampleNote" hidden>กรอกเรื่องตัวอย่างไว้ให้ (เรื่องสมมติ) แก้เป็นเรื่องของคุณแล้วกด "สร้างคลิป"</p>
   <label for="topic">เรื่อง / หัวข้อ / ชื่อบุคคล</label>
   <textarea id="topic" rows="2" placeholder="เช่น ชีวิตนักวิ่งมาราธอนจากหมู่บ้านเล็ก ๆ, เมืองที่ฝนตกขึ้นฟ้า"></textarea>
   <label for="timeline">ไทม์ไลน์ / ข้อเท็จจริง <small>(สไตล์สารคดี: บรรทัดละ 1 เหตุการณ์)</small></label>
@@ -146,7 +162,7 @@ summary{cursor:pointer;font-weight:600;font-size:14px}
     <p class="hint">คีย์ถูกใช้เรียก API จากเบราว์เซอร์นี้โดยตรง ไม่ถูกบันทึกหรือส่งไปที่อื่น</p>
   </div>
   <button class="primary" id="go">สร้างคลิป</button>
-  <div class="status" id="status" role="status"></div>
+  <div class="status-row"><div class="status" id="status" role="status"></div><button id="stopGen" type="button" hidden>หยุด</button></div>
   <details>
     <summary>วิธีเขียนสคริปต์ให้เล่นอารมณ์</summary>
     <div class="legend">
@@ -181,6 +197,25 @@ summary{cursor:pointer;font-weight:600;font-size:14px}
 
 <script>
 "use strict";
+document.documentElement.lang = "th";
+/* ================= ทำงานได้ 2 ที่: ไฟล์ในเครื่อง หรือหน้าเว็บที่เผยแพร่บน claude.ai =================
+   บน claude.ai: บันทึกไฟล์ผ่าน downloads, เขียนสคริปต์ด้วย Claude ผ่าน sample (ไม่ต้องใช้คีย์),
+   เสียงอ่าน Claude ผ่าน tts เมื่อเบราว์เซอร์ไม่มีเสียงไทย, ไม่มีไมโครโฟน (ใช้ไฟล์เสียงแทน) */
+const RT = {viewer: !!(window.claude && typeof window.claude.use === "function"), sample:null, downloads:null, tts:null, resolved:false};
+RT.ready = RT.viewer
+  ? Promise.all(["sample","downloads","tts"].map(n => window.claude.use(n).catch(() => null)))
+      .then(([s, d, t]) => { RT.sample = s; RT.downloads = d; RT.tts = t; RT.resolved = true; applyRuntimeUI(); })
+  : Promise.resolve();
+function applyRuntimeUI(){
+  document.body.classList.toggle("in-viewer", RT.viewer);
+  if (!RT.viewer) return;
+  document.body.classList.toggle("no-downloads", !(RT.resolved && RT.downloads));
+  const o = $("engine").querySelector('option[value="claude"]');
+  o.textContent = RT.resolved && !RT.sample ? "Claude (ใช้ไม่ได้ในหน้านี้)" : "Claude (ใช้บัญชี Claude ของคุณ ไม่ต้องใส่คีย์)";
+  o.disabled = RT.resolved && !RT.sample;
+  if (o.disabled && $("engine").value === "claude") $("engine").value = "local";
+  $("claudeBox").hidden = true;
+}
 /* ================= ข้อมูลสไตล์ (ตรงกับ references/styles.md) ================= */
 const VISUALS = {
   "collage":    {name:"สารคดีคอลลาจ กระดาษฉีก (แบบคลิปตัวอย่าง)", collage:true, caption:"word", hi:"#ffd21f", pal:["#1f2a5c","#f2b21b"],
@@ -220,7 +255,7 @@ const $ = id => document.getElementById(id);
 function fill(sel, obj){ sel.innerHTML = Object.entries(obj).map(([k,v])=>`<option value="${k}">${typeof v==="string"?v:v.name}</option>`).join(""); }
 fill($("visual"), VISUALS); fill($("narrator"), NARRATORS); fill($("music"), MUSICS);
 $("narrator").addEventListener("change", e => { const n=NARRATORS[e.target.value]; $("music").value = n.music; $("speed").value = n.speed; });
-$("engine").addEventListener("change", e => { $("claudeBox").hidden = e.target.value !== "claude"; });
+$("engine").addEventListener("change", e => { $("claudeBox").hidden = e.target.value !== "claude" || RT.viewer; });
 
 /* ================= ตัวแยกสคริปต์ + ตั้งเวลา (port จาก build_subs.py) ================= */
 const PAUSE = {"":0.30,"/":0.35,"//":0.80,"///":1.40};
@@ -474,6 +509,21 @@ ${structure}
 ${rules}
 
 ตอบเป็น JSON อย่างเดียว: {"clips":[{"title":"...","angle":"...","script":"...ทั้งสคริปต์ ใช้ \\n ขึ้นบรรทัด..."}]}`;
+  if (RT.viewer){
+    await RT.ready;
+    if (!RT.sample) throw new Error("หน้านี้ใช้ Claude ไม่ได้ เลือก \"เทมเพลตในเครื่อง\" แทน");
+    const ctl = new AbortController(), stop = $("stopGen");
+    stop.hidden = false; stop.onclick = () => ctl.abort();
+    status("Claude กำลังคิด... อาจใช้เวลา 10–60 วินาที (ใช้โควตาบัญชี Claude ของคุณ)");
+    try {
+      const j = await RT.sample.json(prompt, {signal: ctl.signal, cache: false,
+        onText: ({text}) => status(`Claude กำลังเขียน... ${text.length.toLocaleString("th-TH")} ตัวอักษร`)});
+      const clips = Array.isArray(j?.clips) ? j.clips.filter(c => c && typeof c.script === "string" && c.script.trim()) : [];
+      if (!clips.length) throw {code: "invalid_json"};
+      return clips.slice(0, cfg.count);
+    } catch (e) { throw new Error(sampleError(e)); }
+    finally { stop.hidden = true; stop.onclick = null; }
+  }
   const r = await fetch("https://api.anthropic.com/v1/messages", {method:"POST",
     headers:{"content-type":"application/json","x-api-key":cfg.key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
     body: JSON.stringify({model:cfg.model, max_tokens:16000, messages:[{role:"user", content:prompt}]})});
@@ -482,6 +532,16 @@ ${rules}
   const text = data.content.filter(c=>c.type==="text").map(c=>c.text).join("");
   const j = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}")+1));
   return j.clips.slice(0,cfg.count);
+}
+
+function sampleError(e){
+  const code = e && e.code;
+  if (["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(code)){ RT.sample = null; applyRuntimeUI(); }
+  return ({cancelled:"หยุดการเขียนแล้ว", not_granted:"ไม่ได้อนุญาตให้หน้านี้ใช้ Claude จึงกลับไปใช้เทมเพลตในเครื่อง",
+    sampling_disabled:"บัญชีนี้ใช้ Claude จากหน้านี้ไม่ได้ จึงกลับไปใช้เทมเพลตในเครื่อง", rate_limited:"ใช้ Claude ถี่เกินไปหรือโควตาเต็ม รอสักครู่แล้วกดสร้างใหม่",
+    session_expired:"ต้องเข้าสู่ระบบ Claude ใหม่", refused:"Claude ไม่เขียนเรื่องนี้ ลองปรับหัวข้อ", invalid_json:"อ่านคำตอบจาก Claude ไม่ได้ กดสร้างคลิปอีกครั้ง",
+    empty_completion:"Claude ไม่ได้ตอบกลับ ลองลดจำนวนคลิปหรือความยาว", prompt_too_large:"ข้อมูลยาวเกินไป ลดไทม์ไลน์ลงหน่อย"})[code]
+    || "เชื่อมต่อ Claude ไม่สำเร็จ ลองกดสร้างใหม่อีกครั้ง";
 }
 
 /* ================= เสียง: เพลงสังเคราะห์ + SFX ================= */
@@ -858,7 +918,9 @@ class Clip {
       d.innerHTML = `<b></b><div></div><code></code><button style="margin-top:6px;font-size:12px">คัดลอก prompt</button>`;
       d.querySelector("b").textContent = `ฉาก ${j+1} · ${s.start.toFixed(1)}–${s.end.toFixed(1)} วิ${s.meta.badge?" · ป้าย "+s.meta.badge:""}${s.meta.title?" · หัวข้อ "+s.meta.title:""}${this.media[j]?" · 🖼 มีสื่อแล้ว":""}`;
       d.querySelector("div").textContent = `${s.desc}: “${lines}”`; d.querySelector("code").textContent = prompt;
-      d.querySelector("button").onclick = ()=>navigator.clipboard?.writeText(prompt); sb.appendChild(d); });
+      const code = d.querySelector("code"), pick = () => { const r = document.createRange(); r.selectNodeContents(code); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); status("เลือกข้อความไว้แล้ว กด Ctrl+C เพื่อคัดลอก"); };
+      d.querySelector("button").onclick = () => { try { const p = navigator.clipboard?.writeText(prompt); p ? p.then(() => status("คัดลอก prompt แล้ว"), pick) : pick(); } catch { pick(); } };
+      sb.appendChild(d); });
   }
   optDraw(){ return this.opt; }
   pickVoice(){ this.el.querySelector('[data-f="voice"]').click(); }
@@ -875,7 +937,7 @@ class Clip {
       el.dataset.name = f.name; this.media[j++] = el; }
     this.refresh(); }
   /* ---- เล่น ---- */
-  stop(){ this.playing=false; cancelAnimationFrame(this.raf); clearTimeout(this.raf); speechSynthesis.cancel(); (this.nodes||[]).forEach(n=>{ try{n.stop()}catch{} }); this.nodes=[]; if(this.master){ try{this.master.disconnect()}catch{} } this.media.forEach(m=>m?.pause?.()); }
+  stop(){ this.playing=false; cancelAnimationFrame(this.raf); clearTimeout(this.raf); window.speechSynthesis?.cancel(); if (this.ttsOff){ this.ttsOff(); this.ttsOff=null; RT.tts?.stop().catch(()=>{}); } (this.nodes||[]).forEach(n=>{ try{n.stop()}catch{} }); this.nodes=[]; if(this.master){ try{this.master.disconnect()}catch{} } this.media.forEach(m=>m?.pause?.()); }
   startAudio(recordDest){
     const ac=audio(); ac.resume(); const master=ac.createGain(); master.connect(ac.destination); if (recordDest) master.connect(recordDest); this.master=master;
     const t0 = ac.currentTime+0.15; this.nodes = scheduleMusic(ac, master, this.opt.music, t0, this.tl.total);
@@ -899,9 +961,11 @@ class Clip {
   play(){
     state.clips.forEach(c=>c!==this && c.stop()); this.stop(); this.playing=true; this.aud=this.startAudio();
     const {ac,t0} = this.aud;
-    const voices = speechSynthesis.getVoices().filter(v=>/^th/i.test(v.lang));
-    if (this.voice || !voices.length){
-      if (!this.voice) status("ไม่พบเสียงอ่านภาษาไทยในเบราว์เซอร์นี้ พรีวิวได้เฉพาะภาพ ซับ และเพลง (อัดเสียงเองได้ด้วยปุ่ม 🎙)");
+    const voices = (window.speechSynthesis?.getVoices?.() || []).filter(v=>/^th/i.test(v.lang));
+    if (this.voice){ this.loop(()=>ac.currentTime-t0); return; }
+    if (!voices.length){
+      if (RT.tts){ this.playTts(); return; }
+      status("ไม่พบเสียงอ่านภาษาไทยในเบราว์เซอร์นี้ พรีวิวได้เฉพาะภาพ ซับ และเพลง" + (RT.viewer ? " (ใส่ไฟล์เสียงพากย์ได้ด้วยปุ่ม 📁)" : " (อัดเสียงเองได้ด้วยปุ่ม 🎙)"));
       this.loop(()=>ac.currentTime-t0); return; }
     // พรีวิวด้วยเสียงอ่านของเบราว์เซอร์: เวลาวิ่งตามการพูดจริง
     const N = NARRATORS[this.opt.narrator], chunks=this.tl.chunks; let vt = 0, mark = performance.now(), speaking=-1;
@@ -912,11 +976,29 @@ class Clip {
       u.rate = N.rate*sp*({"กระซิบ":0.9,"ช้าลง":0.85,"ตื่นเต้น":1.1,"ขำ":1.05}[c.emotion]||1); u.pitch=N.pitch; u.volume = c.emotion==="กระซิบ"?0.75:1;
       u.onstart = ()=>{ speaking=i; mark=performance.now(); };
       u.onend = ()=>{ speaking=-1; vt=c.end; mark=performance.now(); setTimeout(()=>say(i+1), PAUSE[c.pause]*(PAUSE_SCALE[this.opt.speed]??1)*1000); };
-      speechSynthesis.speak(u); };
+      window.speechSynthesis.speak(u); };
     vt = 0; mark = performance.now(); setTimeout(()=>say(0), 400);
     this.loop(clock);
   }
-  srt(){ download(`clip${this.i+1}.srt`, new Blob([toSrt(this.tl.chunks)],{type:"text/plain"})); }
+  /* เสียงอ่านของ Claude (บน claude.ai เมื่อเบราว์เซอร์ไม่มีเสียงไทย): อ่านทุกท่อนต่อกันเป็นหนึ่งรอบ ซับเดินตามท่อนที่กำลังอ่าน */
+  playTts(){
+    const t = RT.tts, chunks = this.tl.chunks, N = NARRATORS[this.opt.narrator], sp = {slow:0.92,normal:1,fast:1.1}[this.opt.speed];
+    let speaking = -1, vt = 0, mark = performance.now();
+    const clock = () => { const el=(performance.now()-mark)/1000; if (speaking>=0) return Math.min(chunks[speaking].start+el, chunks[speaking].showEnd-0.02); return vt+el; };
+    const offs = [
+      t.onLine(({id}) => { const i = Number(id); if (Number.isInteger(i) && chunks[i]){ speaking = i; mark = performance.now(); } }),
+      t.onState(({state: st, reason}) => { if (st === "idle"){ speaking = -1; vt = chunks.length ? chunks[chunks.length-1].end : 0; mark = performance.now();
+        if (reason && !["completed","stopped","replaced"].includes(reason)) status(ttsMessage(reason)); } }),
+    ];
+    this.ttsOff = () => offs.forEach(f => { try { f(); } catch {} });
+    const lines = chunks.slice(0, 100).map((c,i) => ({text: speakable(c.text) || "...", id: String(i)}));
+    if (lines.length) t.speak(lines, {language: "th", rate: Math.min(1.5, Math.max(0.7, N.rate*sp))})
+      .catch(e => { if (e?.code !== "stopped"){ status(ttsMessage(e?.code)); if (e?.code === "not_granted") RT.tts = null; } });
+    status("พรีวิวด้วยเสียงอ่านของ Claude");
+    this.loop(clock);
+  }
+  srt(){ return download(`clip${this.i+1}.srt`, new Blob([toSrt(this.tl.chunks)],{type:"text/plain"}))
+    .then(ok => { if (ok) status(RT.viewer ? `บันทึกซับคลิป ${this.i+1} แล้ว (ลบ .txt ท้ายชื่อไฟล์ให้เหลือ .srt ก่อนอัปโหลด)` : `บันทึกซับคลิป ${this.i+1} แล้ว`); return ok; }); }
   async exportBoth(){ const f=this.fmt; await this.export("9x16"); await this.export("16x9"); this.setFmt(f); }
   export(fmt){
     if (typeof fmt === "string" && fmt!==this.fmt) this.setFmt(fmt);
@@ -928,9 +1010,11 @@ class Clip {
       if (!mime){ status("เบราว์เซอร์นี้บันทึกวิดีโอไม่ได้ ใช้ Chrome/Edge หรือดาวน์โหลด project.json ไปเรนเดอร์ด้วย render.py"); return res(); }
       const rec = new MediaRecorder(stream, {mimeType:mime, videoBitsPerSecond:8e6}), parts=[];
       rec.ondataavailable = e=>e.data.size && parts.push(e.data);
-      rec.onstop = ()=>{ const ext = mime.startsWith("video/mp4")?"mp4":"webm"; download(`clip${this.i+1}_${this.fmt}.${ext}`, new Blob(parts,{type:mime.split(";")[0]})); status(`บันทึกคลิป ${this.i+1} (${this.fmt.replace("x",":")}) เสร็จแล้ว`); res(); };
+      rec.onstop = async ()=>{ const ext = mime.startsWith("video/mp4")?"mp4":"webm";
+        const ok = await download(`clip${this.i+1}_${this.fmt}.${ext}`, new Blob(parts,{type:mime.split(";")[0]}));
+        if (ok) status(`บันทึกคลิป ${this.i+1} (${this.fmt.replace("x",":")}) เสร็จแล้ว`); res(); };
       this.playing=true; this.aud=this.startAudio(dest); const {t0}=this.aud;
-      status(`กำลังบันทึกคลิป ${this.i+1} (${this.fmt.replace("x",":")}) แบบเรียลไทม์ ${this.tl.total.toFixed(0)} วินาที เปิดแท็บนี้ค้างไว้`+(this.voice?"":" · ยังไม่มีเสียงพากย์: กด 🎙 อัดเสียงก่อนถ้าต้องการเสียงพูดในไฟล์"));
+      status(`กำลังบันทึกคลิป ${this.i+1} (${this.fmt.replace("x",":")}) แบบเรียลไทม์ ${this.tl.total.toFixed(0)} วินาที เปิดแท็บนี้ค้างไว้`+(this.voice ? "" : RT.viewer ? " · ยังไม่มีเสียงพากย์: ใส่ไฟล์เสียงด้วยปุ่ม 📁 ก่อนถ้าต้องการเสียงพูดในไฟล์" : " · ยังไม่มีเสียงพากย์: กด 🎙 อัดเสียงก่อนถ้าต้องการเสียงพูดในไฟล์"));
       rec.start(500);
       this.loop(()=>ac.currentTime-t0, ()=>{ setTimeout(()=>{ rec.stop(); this.stop(); }, 300); }, true);
     });
@@ -971,7 +1055,25 @@ function syncSession(clip, title, begin, finish){
 
 /* ================= UI หลัก ================= */
 function status(s){ $("status").textContent=s; }
-function download(name, blob){ const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000); }
+function ttsMessage(code){
+  return ({not_granted:"ปิดเสียงอ่านของ Claude ไว้สำหรับหน้านี้", rate_limited:"อ่านออกเสียงถี่เกินไป รอสักครู่แล้วกดเล่นใหม่", no_gesture:"กดปุ่ม ▶ อีกครั้งเพื่อเริ่มเสียงอ่าน",
+    busy:"รอให้การพูด/ถามตอบอื่นจบก่อน แล้วกดเล่นใหม่", viewer_stopped:"หยุดเสียงอ่านแล้ว", hidden:"หยุดเสียงอ่านเพราะสลับหน้า", interrupted:"เสียงอ่านถูกขัดจังหวะ",
+    unavailable:"เสียงอ่านของ Claude ใช้ไม่ได้ตอนนี้"})[code] || "เสียงอ่านขัดข้อง แสดงซับอย่างเดียว";
+}
+/* บันทึกไฟล์: บน claude.ai ผ่านหน้าต่างยืนยันของ downloads (.srt ไม่อยู่ในรายการที่อนุญาต จึงบันทึกเป็น .srt.txt) ในเครื่องใช้ลิงก์ดาวน์โหลดปกติ */
+async function download(name, blob){
+  if (RT.viewer){
+    await RT.ready;
+    if (!RT.downloads){ status("หน้านี้บันทึกไฟล์ลงเครื่องไม่ได้ เปิดไฟล์ index.html ในเครื่องแทน"); return false; }
+    const filename = /\.srt$/i.test(name) ? name + ".txt" : name;
+    try { await RT.downloads.save({filename, data: blob}); return true; }
+    catch (e){ status(({declined:"ยกเลิกการบันทึกไฟล์แล้ว", rate_limited:"มีหน้าต่างบันทึกไฟล์ค้างอยู่ ตอบหน้าต่างนั้นก่อนแล้วลองใหม่",
+      too_large:"ไฟล์ใหญ่เกินกว่าที่ปลายทางรับได้", rejected_extension:"ไฟล์ชนิดนี้บันทึกจากหน้านี้ไม่ได้", extension_not_enabled:"ไฟล์ชนิดนี้บันทึกจากหน้านี้ไม่ได้"})[e?.code]
+      || "บันทึกไฟล์ไม่สำเร็จ"); return false; }
+  }
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  return true;
+}
 const FIELDS = ["topic","timeline","hero","side","place","series","message","count","length","visual","narrator","format","caption","music","speed","sfx","banner","engine","model"];
 function readOpt(){
   const v = id => $(id).value;
@@ -979,21 +1081,21 @@ function readOpt(){
     series:v("series").trim(), count:+v("count"), len:+v("length"), visual:v("visual"), narrator:v("narrator"), format:v("format"), caption:v("caption"), music:v("music"), speed:v("speed"),
     sfx:v("sfx")==="on", banner:v("banner")==="on", engine:v("engine"), model:v("model"), key:v("apikey").trim()};
 }
-try { const saved = JSON.parse(localStorage.getItem("vstudio2")||"{}"); FIELDS.forEach(f=>{ if (saved[f]!=null) $(f).value = saved[f]; }); $("claudeBox").hidden = $("engine").value!=="claude"; } catch {}
 function clipMeta(opt, i, n){
   if (opt.narrator === "doc") return docMeta(opt.brief, i, n);
   return {title:`${cleanTopic(opt.brief.topic)} ตอนที่ ${i+1}`, angle:ANGLES[i]};
 }
-$("go").addEventListener("click", async ()=>{
+async function generate(auto = false){
   const opt = readOpt();
+  if (auto) opt.engine = "local"; // ตัวอย่างตอนเปิดหน้าใช้เทมเพลตในเครื่องเสมอ ไม่ใช้โควตา Claude
   if (!opt.brief.topic){ status("กรอกเรื่องหรือหัวข้อก่อนนะ"); $("topic").focus(); return; }
-  try { localStorage.setItem("vstudio2", JSON.stringify(Object.fromEntries(FIELDS.map(f=>[f,$(f).value])))); } catch {}
+  if (!auto){ $("exampleNote").hidden = true; try { localStorage.setItem("vstudio2", JSON.stringify(Object.fromEntries(FIELDS.map(f=>[f,$(f).value])))); } catch {} }
   state.clips.forEach(c=>c.stop()); $("go").disabled=true;
   let data;
   try {
     if (opt.engine==="claude"){
-      if (!opt.key) throw new Error("ใส่ Anthropic API key ก่อน หรือเปลี่ยนเป็นเทมเพลตในเครื่อง");
-      status(`กำลังให้ Claude เขียนสคริปต์ ${opt.count} คลิป...`);
+      if (!RT.viewer && !opt.key) throw new Error("ใส่ Anthropic API key ก่อน หรือเปลี่ยนเป็นเทมเพลตในเครื่อง");
+      if (!RT.viewer) status(`กำลังให้ Claude เขียนสคริปต์ ${opt.count} คลิป...`);
       data = await claudeScripts(opt.brief, opt);
     } else {
       data = Array.from({length:opt.count}, (_,i)=>({...clipMeta(opt,i,opt.count), script:localScript(opt.brief, opt.narrator, i, opt.len, i, opt.count, opt.speed)}));
@@ -1003,8 +1105,10 @@ $("go").addEventListener("click", async ()=>{
   state.opt = opt; const box=$("clips"); box.innerHTML="";
   state.clips = data.map((d,i)=>{ const c=new Clip(i, data.length, {title:d.title||clipMeta(opt,i,data.length).title, angle:d.angle||clipMeta(opt,i,data.length).angle, script:d.script}, opt); box.appendChild(c.el); return c; });
   $("bulk").hidden=false; $("go").disabled=false;
-  if (!(opt.narrator==="doc" && !opt.brief.timeline && opt.engine!=="claude")) status(`สร้าง ${data.length} คลิปแล้ว กด ▶ เพื่อพรีวิว แก้สคริปต์ได้ในกล่องข้อความ`);
-});
+  if (auto) status(`ตัวอย่าง ${data.length} คลิปพร้อมแล้ว กด ▶ เล่นพรีวิว หรือแก้ข้อมูลทางซ้ายแล้วกด "สร้างคลิป"`);
+  else if (!(opt.narrator==="doc" && !opt.brief.timeline && opt.engine!=="claude")) status(`สร้าง ${data.length} คลิปแล้ว กด ▶ เพื่อพรีวิว แก้สคริปต์ได้ในกล่องข้อความ`);
+}
+$("go").addEventListener("click", () => generate());
 $("dlProject").onclick = ()=>{
   const o=state.opt; const fm = o.format==="both"?["9x16","16x9"]:[o.format];
   const project = {title:cleanTopic(o.brief.topic), series:o.series||cleanTopic(o.brief.topic), brief:o.brief, visualStyle:o.visual, narratorStyle:o.narrator, captionMode:captionMode(o), banner:o.banner,
@@ -1012,12 +1116,23 @@ $("dlProject").onclick = ()=>{
     clips: state.clips.map(c=>({title:c.title, angle:c.angle, script:c.script, voice:c.voiceBlob?c.voiceBlob.name:null,
       timings:c.timings ? c.timings.map(x=>x?{start:+x.start.toFixed(3)}:null) : null,
       scenes:c.tl.scenes.map((s,j)=>({desc:s.desc, prompt:`${s.desc}. ${VISUALS[o.visual].prompt}`, media:c.media[j]?.dataset?.name||null, motion:["zoom-in","pan-right","zoom-out","pan-left"][j%4]}))}))};
-  download("project.json", new Blob([JSON.stringify(project,null,2)],{type:"application/json"}));
-  status("ได้ project.json แล้ว วางไฟล์เสียงหรือรูปที่ระบุไว้ในโฟลเดอร์เดียวกัน แล้วรัน: python3 render.py project.json --out out/");
+  download("project.json", new Blob([JSON.stringify(project,null,2)],{type:"application/json"}))
+    .then(ok => ok && status("ได้ project.json แล้ว วางไฟล์เสียงหรือรูปที่ระบุไว้ในโฟลเดอร์เดียวกัน แล้วรัน: python3 render.py project.json --out out/"));
 };
-$("dlAllSrt").onclick = ()=>state.clips.forEach(c=>c.srt());
-$("dlAllScripts").onclick = ()=>download("scripts.txt", new Blob([state.clips.map(c=>`### คลิป ${c.i+1}: ${c.title} (${c.angle})\n${c.script}\n`).join("\n")],{type:"text/plain"}));
-speechSynthesis?.getVoices();
+$("dlAllSrt").onclick = async ()=>{ for (const c of state.clips){ if (!(await c.srt())) break; } };
+$("dlAllScripts").onclick = ()=>download("scripts.txt", new Blob([state.clips.map(c=>`### คลิป ${c.i+1}: ${c.title} (${c.angle})\n${c.script}\n`).join("\n")],{type:"text/plain"}))
+  .then(ok => ok && status("บันทึกสคริปต์ทุกคลิปแล้ว"));
+/* เปิดหน้า: คืนค่าที่เคยกรอก หรือใส่เรื่องตัวอย่าง (เรื่องสมมติ) แล้วสร้างตัวอย่างให้เห็นทันที */
+const EXAMPLE = {topic:"ต้นกล้า นักวิ่งจากหมู่บ้านริมโขง (เรื่องสมมติ)", hero:"ต้นกล้า", side:"", place:"หมู่บ้านริมโขง", series:"ตำนานคนสู้ชีวิต",
+  message:"ถ้าเคยมีใครบอกว่าคุณทำไม่ได้ เรื่องนี้คือคำตอบ",
+  timeline:"2008 | เท้าเปล่า 10 กิโล | วิ่ง เท้า เปล่า ไป โรงเรียน วัน ละ 10 กิโล\n2012 | ไม่มีใครเลือก | ไป คัด ตัว ทีม จังหวัด แต่ ไม่ มี ใคร เลือก\n2015 | เข่าพัง | หมอ บอก ว่า ห้าม วิ่ง ตลอด ชีวิต\n2018 | วันละกิโล | เริ่ม จาก เดิน วัน ละ 1 กิโล ทุก เช้า\n2023 | เหรียญทองแรก | เข้า เส้นชัย เป็น คน แรก ของ ประเทศ"};
+let restored = false;
+try { const saved = JSON.parse(localStorage.getItem("vstudio2") || "null"); if (saved && saved.topic){ FIELDS.forEach(f=>{ if (saved[f]!=null) $(f).value = saved[f]; }); restored = true; } } catch {}
+if (!restored){ Object.entries(EXAMPLE).forEach(([k,v]) => { $(k).value = v; }); $("exampleNote").hidden = false; }
+$("claudeBox").hidden = $("engine").value !== "claude" || RT.viewer;
+applyRuntimeUI();
+generate(true);
+window.speechSynthesis?.getVoices?.();
 document.fonts?.ready.then(()=>state.clips.forEach(c=>c.refresh()));
 </script>
 </body>

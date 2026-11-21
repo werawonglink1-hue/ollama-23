@@ -15,3 +15,22 @@
 ```bash
 python3 .claude/skills/social-video-studio/scripts/render.py .claude/skills/social-video-studio/templates/project.example.json --out out/
 ```
+
+## ติดตั้งและรันบน Windows (ไดรฟ์ D:)
+
+ติดตั้งเครื่องมือครั้งเดียว (PowerShell): Git, Python 3 + Pillow, ffmpeg (มี libass สำหรับซับ), Node.js (ไม่บังคับ ใช้ตัดคำไทยให้ซับคำต่อคำแม่นขึ้น)
+
+```powershell
+winget install Git.Git Python.Python.3.12 Gyan.FFmpeg OpenJS.NodeJS.LTS
+py -m pip install pillow
+```
+
+ดึงโปรเจกต์ลงไดรฟ์ D:
+
+```powershell
+git clone -b claude/beautiful-goldberg-a1jt5q https://github.com/werawonglink1-hue/ollama-23.git D:\agent-office-workspace\video-studio\social-video-studio
+```
+
+- เปิด Claude Code (แอป Claude บนเดสก์ท็อป) ในโฟลเดอร์ `D:\agent-office-workspace\video-studio\social-video-studio` แล้ว skill และทีม agent 20 ตำแหน่งจะโหลดอัตโนมัติ
+- เว็บ: ดับเบิลคลิก `video-studio-web\index.html` (Chrome/Edge)
+- เรนเดอร์: `py .claude\skills\social-video-studio\scripts\render.py <project.json> --out out` (รองรับ path แบบ `D:\...` และชื่อไฟล์ภาษาไทยแล้ว)
