@@ -4,7 +4,7 @@
 |---|---|
 | เว็บตัดต่อ (เปิด `index.html` ใน Chrome/Edge) | [`video-studio-web/`](video-studio-web/README.md) |
 | Skill สำหรับ Claude Code | [`.claude/skills/social-video-studio/`](.claude/skills/social-video-studio/SKILL.md) |
-| ทีม Agent (ผู้กำกับ, นักเขียนสคริปต์, อาร์ตไดเรกเตอร์, ซับ+ซาวด์, ตัดต่อ) | [`.claude/agents/`](.claude/agents/) |
+| ทีม AI Agent 20 ตำแหน่ง (ทำคลิป · โซเชียล · ภาพ/แบรนด์ · ข้อเสนอ/แอด · ทำเว็บ) | [`.claude/agents/`](.claude/agents/) · ผังทีม [`team.md`](.claude/skills/social-video-studio/references/team.md) |
 
 กรอกข้อมูลครั้งเดียวได้ 1–5 คลิป ค่าเริ่มต้นเป็นแบบ "สารคดีคอลลาจ" ตามคลิปตัวอย่างพื้นฐาน
 (ป้ายปี หัวข้อ ขอบกระดาษฉีก ซับเด้งคำต่อคำ) และเลือกสไตล์อื่นได้จากดรอปดาวน์ เช่น เล่าเรื่องละมุน ครูหน่อง มานะ

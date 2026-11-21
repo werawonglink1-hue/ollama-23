@@ -11,9 +11,10 @@ Skill นี้มี 3 ส่วน ใช้ร่วมกันหรือ�
 |---|---|---|
 | เว็บตัดต่อ | `video-studio-web/index.html` | เปิดในเบราว์เซอร์ กรอกข้อมูลครั้งเดียว ได้ 1–5 คลิป พรีวิวพร้อมเสียงอ่าน ซับ เพลง แล้วดาวน์โหลดวิดีโอ, SRT, project.json |
 | สคริปต์เรนเดอร์ | `scripts/build_subs.py`, `scripts/render.py` | สคริปต์เป็นซับ SRT/ASS ที่ตั้งเวลาแล้ว และเรนเดอร์ MP4 ด้วย ffmpeg (9:16 และ/หรือ 16:9) หน้าตาเดียวกับเว็บ |
-| ทีม Agent | `.claude/agents/*.md` | ผู้กำกับ, นักเขียนสคริปต์, อาร์ตไดเรกเตอร์, ซับ+ซาวด์, ตัดต่อ |
+| ทีม Agent 20 ตำแหน่ง | `.claude/agents/*.md` + `references/team.md` | 5 แผนก: ทำคลิป · โซเชียล · ภาพ/แบรนด์ · ข้อเสนอ/แอด · ทำเว็บ |
 
 อ่านก่อนเริ่มงานทุกครั้ง:
+- `references/team.md` — ผังทีม 20 ตำแหน่ง ใครทำอะไร ส่งต่อให้ใคร และโฟลเดอร์ทำงาน
 - `references/baseline.md` — ถอดคลิปตัวอย่างพื้นฐาน (สารคดีคอลลาจ) ทั้งภาพ จังหวะ ซับ เสียง ที่ทุกคลิปต้องได้อย่างน้อย
 - `references/script-rules.md` — รูปแบบสคริปต์ เครื่องหมายเว้นวรรค `/ // ///` คีย์ในบรรทัดฉาก และโครงเรื่องแต่ละสไตล์
 - `references/styles.md` — สไตล์ภาพ ผู้เล่า เพลง ซาวด์ รูปแบบซับ ที่อยู่ในดรอปดาวน์
@@ -24,30 +25,25 @@ Skill นี้มี 3 ส่วน ใช้ร่วมกันหรือ�
 `visualStyle=collage` · `narratorStyle=doc` · `captionMode=word` · `music=doc` · `speed=normal` · `banner=true` · `formats=9x16,16x9`
 ถ้าผู้ใช้เลือกสไตล์อื่นจากดรอปดาวน์ ให้ใช้ค่าตามที่เลือก (เช่น `lamun` + `pastel3d` + ซับทีละวลี ช้า ละมุน)
 
-## ขั้นตอนทำงาน (Agent pipeline)
+## ขั้นตอนทำงาน (ทีม 20 ตำแหน่ง)
 
-ข้อมูลจากผู้ใช้ 1 ครั้ง (หัวข้อ, ไทม์ไลน์/ข้อเท็จจริง, ตัวละคร, ฉาก, จำนวนคลิป 1–5, สไตล์ภาพ, สไตล์ผู้เล่า, ขนาด, ความยาว) ไหลผ่าน agent ตามลำดับนี้:
+Claude หลักเป็นโปรดิวเซอร์ เรียกตำแหน่งใน `.claude/agents/` ตามสายงานใน `references/team.md`:
 
 ```
-ผู้ใช้ ──► video-director ──► story-scriptwriter (×N คลิป ทำขนานกันได้)
-                │                      │
-                │                      ▼
-                ├──────────► art-director (สตอรีบอร์ด ป้ายปี หัวข้อ prompt ภาพต่อฉาก)
-                │                      │
-                │                      ▼
-                ├──────────► subtitle-sound-engineer (ตั้งเวลาซับ, เพลง, SFX)
-                │                      │
-                │                      ▼
-                └──────────► video-editor (เรนเดอร์ 9:16 / 16:9 + ตรวจคุณภาพ)
+A) ทำคลิป:  Content Creator → Reality Checker → Visual Storyteller → Image Prompt Engineer → Brand Guardian
+            → Short-Video Editing Coach → Video Optimization Specialist → Reality Checker
+B) โซเชียล: TikTok Strategist + Instagram Curator + Carousel Growth Engine (ขนานกัน) → Brand Guardian → Growth Hacker
+C) แอด:     Pricing Analyst → Offer & Lead Gen Strategist → Ad Creative Strategist → Paid Social Strategist
+D) ทำเว็บ:  UI Designer → Frontend Developer → Code Reviewer + Security Auditor (ขนานกัน) → Minimal Change Engineer → Reality Checker
 ```
 
-1. **video-director**: สรุป brief เป็น `project.json` (ดู `templates/project.example.json`) แจกมุมเล่าให้แต่ละคลิป (ห้ามซ้ำกัน)
-2. **story-scriptwriter**: เขียนสคริปต์ทีละคลิปตาม `script-rules.md` (สารคดี: เว้นวรรคระหว่างคำ ใส่ `ป้าย:` `หัวข้อ:` ทุกบท)
-3. **art-director**: แตก `[ฉาก: ...]` เป็นสตอรีบอร์ด + prompt ภาพตามสไตล์ภาพที่เลือก เลือก `ภาพ: เต็ม/วงกลม` และ `โทน: ขาวดำ` ให้ภาพเก่า
-4. **subtitle-sound-engineer**: รัน `build_subs.py` ตรวจว่าไม่มีท่อนเร็วเกิน เลือกเพลงและวางเสียงประกอบ
-5. **video-editor**: รัน `render.py` แล้วดึงเฟรมตัวอย่างมาเปิดดู ตรวจซับไม่ล้นจอ ไม่ทับ safe zone
+1. **Content Creator**: brief เป็นแผนซีรีส์ 1–5 คลิป (มุมเล่าไม่ซ้ำ) และสคริปต์ตาม `script-rules.md` (สารคดี: เว้นวรรคระหว่างคำ ใส่ `ป้าย:` `หัวข้อ:` ทุกบท)
+2. **Reality Checker**: ตรวจข้อเท็จจริงก่อนลงมือทำภาพ
+3. **Visual Storyteller** + **Image Prompt Engineer**: บรรทัดฉาก สตอรีบอร์ด prompt ภาพ; **Brand Guardian** ตรวจแบรนด์/ลิขสิทธิ์
+4. **Short-Video Editing Coach**: `build_subs.py` ไม่มีท่อนเร็วเกิน → `render.py` → เปิดดูเฟรม; **Video Optimization Specialist** ตรวจสเปก/ปก/ความดัง
+5. **Reality Checker** ตรวจไฟล์จริงก่อนส่งผู้ใช้ แล้วจึงต่อสายงาน B/C ตามที่ผู้ใช้ต้องการ
 
-ถ้าใช้ Agent tool ได้ ให้ spawn agent ตามชื่อไฟล์ใน `.claude/agents/` (คลิปหลายตัวให้ scriptwriter ทำขนานกัน) ถ้าไม่ได้ ให้ทำตามบทบาทเรียงลำดับเองในเซสชันเดียว
+ถ้าใช้ Agent tool ได้ ให้เรียกตามชื่อไฟล์ (งานที่ขนานกันได้ให้เรียกพร้อมกัน) ถ้าไม่ได้ ให้ทำตามบทบาทเรียงลำดับเองในเซสชันเดียว
 
 ## คำสั่งที่ใช้บ่อย
 
