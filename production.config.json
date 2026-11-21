@@ -63,7 +63,8 @@
       "project": "STORY",
       "visualStyle": "toon3d",
       "narratorStyle": "lamun",
-      "music": "musicbox"
+      "music": "musicbox",
+      "fps": 24
     },
     "เล่าเรื่องละมุน": {
       "project": "STORY",
@@ -83,11 +84,12 @@
     "16x9"
   ],
   "motion": {
-    "_about": "วิดีโอจากภาพช็อต (image-to-video) ทำเฉพาะช็อตที่ 'เคลื่อนไหว:' ราคา ≈ 1 เครดิต/วินาที (grok_video_v15_lite)",
-    "model": "grok_video_v15_lite",
-    "resolution": "480p",
-    "seconds": 3,
-    "shots": "marked"
+    "_about": "วิดีโอจากภาพช็อต (สกิล cinematic-image-to-video) ทำเฉพาะช็อตที่ 'เคลื่อนไหว:' · seedance_2_0_mini แนบ character sheet ได้ 720p ≈ 1 เครดิต/วินาที (480p ≈ 0.5) · seconds = เพดานความยาวต่อช็อต",
+    "model": "seedance_2_0_mini",
+    "resolution": "720p",
+    "seconds": 8,
+    "shots": "marked",
+    "promptStandard": "cinematic-image-to-video"
   },
   "characterSheet": {
     "_about": "ออกแบบตัวละครครั้งเดียวต่อซีรีส์ ตามเวิร์กโฟลว์ character-sheet ของ Higgsfield (≈3.5 เครดิต/ตัว) โหมดประหยัดใช้ gpt_image_2_6 (≈0.75)",

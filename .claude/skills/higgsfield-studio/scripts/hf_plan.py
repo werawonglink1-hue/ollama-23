@@ -10,7 +10,8 @@
 
 ราคาโดยประมาณ (21 พ.ย. 2026 · ต้องเช็กด้วย estimate_*_cost ทุกครั้งก่อนสร้าง):
   เสียงพากย์ qwen_audio_tts ≈ 0.2/คลิป · ภาพช็อต gpt_image_2_6 (1k) ≈ 0.75/ภาพ · character sheet seedream_5_5 2k ≈ 3.5/ตัว (ครั้งเดียว)
-  วิดีโอ grok_video_v15_lite ≈ 1/วินาที (3 วิ 480p = 3, 5 วิ 720p = 5) · kling3_0_turbo 5 วิ = 7.5 · seedance_2_5 5 วิ = 35
+  วิดีโอ seedance_2_0_mini (แนบ sheet) 720p ≈ 1/วินาที, 480p ≈ 0.5 · grok_video_v15_lite ≈ 1/วินาที · kling3_0 4k 5 วิ = 30
+  (prompt วิดีโอตามมาตรฐานสกิล cinematic-image-to-video › i2v_prompt.py)
   เพลง ElevenLabs 60 วิ ≈ 8.7
 
 ตัวอย่าง:
@@ -24,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import re
 import sys
@@ -32,6 +34,9 @@ import urllib.request
 HERE = os.path.dirname(os.path.abspath(__file__))
 SVS = os.path.join(HERE, "..", "..", "social-video-studio", "scripts")
 sys.path.insert(0, SVS)
+sys.path.insert(0, os.path.join(HERE, "..", "..", "cinematic-image-to-video", "scripts"))
+CONFIG = os.path.normpath(os.path.join(HERE, "..", "..", "..", "..", "production.config.json"))
+import i2v_prompt  # noqa: E402  มาตรฐาน prompt "CINEMATIC 3D ANIMATION — IMAGE TO VIDEO"
 
 STYLE_SUFFIX = {
     "collage": "editorial documentary photograph, archival magazine feel, natural light, clear subject, no text",
@@ -52,11 +57,29 @@ SHOT_EN = {"ไกลมาก": "extreme wide establishing shot", "กว้า
            "โคลสอัพ": "close-up on the face", "มุมสูง": "high-angle shot", "มุมต่ำ": "low-angle shot",
            "ข้ามไหล่": "over-the-shoulder shot", "มุมมองตัวละคร": "point-of-view shot"}
 SHOT_CYCLE = ["wide shot", "medium shot", "close-up on the face", "medium close-up", "low-angle shot", "over-the-shoulder shot"]
-CAMERA_EN = {"push-in": "slow camera push-in", "pull-out": "slow camera pull-back", "pan-left": "gentle pan left",
-             "pan-right": "gentle pan right", "tilt-up": "slow tilt up", "tilt-down": "slow tilt down", "static": "locked-off camera"}
-MOTION_DEFAULT = {"model": "grok_video_v15_lite", "resolution": "480p", "seconds": 3}
+MOTION_DEFAULT = {"model": "seedance_2_0_mini", "resolution": "720p", "seconds": 8}
+# ความสามารถของโมเดลวิดีโอ: refs = แนบ character sheet เป็น image_references ได้ (ตัวละครเหมือนเดิมกว่า)
+MOTION_MODELS = {
+    "seedance_2_0_mini": {"refs": True, "min": 4, "max": 15, "extra": {"generate_audio": False}},
+    "seedance_2_0": {"refs": True, "min": 4, "max": 15, "extra": {"generate_audio": False, "mode": "std"}},
+    "seedance_2_5": {"refs": True, "min": 4, "max": 30, "extra": {"generate_audio": False, "mode": "omni_reference"}},
+    "grok_video_v15": {"refs": True, "min": 2, "max": 15, "extra": {}},
+    "grok_video_v15_lite": {"refs": False, "min": 1, "max": 15, "extra": {}},
+    "kling3_0_turbo": {"refs": False, "min": 3, "max": 15, "extra": {}},
+    "kling3_0": {"refs": False, "min": 3, "max": 15, "extra": {"mode": "pro", "sound": "off"}, "no_resolution": True},
+}
 COST = {"qwen_audio_tts": 0.2, "gpt_image_2_6": 0.75, "seedream_5_5": 3.5, "elevenlabs_music_v2_5": 8.7}
-VIDEO_COST_PER_SEC = {"grok_video_v15_lite": 1.0, "kling3_0_turbo": 1.5, "seedance_2_5": 7.0}
+VIDEO_COST_PER_SEC = {"seedance_2_0_mini": 1.0, "seedance_2_0_mini@480p": 0.5, "grok_video_v15_lite": 1.0,
+                      "kling3_0_turbo": 1.5, "kling3_0": 1.75, "grok_video_v15": 4.5, "seedance_2_0": 12.0,
+                      "seedance_2_5": 7.0}  # วัดจริง 21 พ.ย. 2026 (9:16 ไม่มีเสียง) · ต้องเช็ก estimate_video_cost ก่อนสร้างทุกครั้ง
+
+
+def config_motion():
+    """ค่า motion ใน production.config.json (ถ้ามี) · project.json ทับได้"""
+    try:
+        return json.load(open(CONFIG, encoding="utf-8")).get("motion") or {}
+    except (OSError, ValueError):
+        return {}
 
 
 def slugify(s):
@@ -149,19 +172,23 @@ def cmd_plan(a):
             if not meta.get("job_id"):
                 print(f"⚠ คลิป {ci} ฉาก {j + 1}: ยังไม่มีภาพช็อต (job_id) สร้างภาพก่อน แล้วค่อยทำวิดีโอ", file=sys.stderr)
                 continue
-            mv = {**MOTION_DEFAULT, **(p.get("motion") or {})}
-            secs = int(min(max(2, round(sc.end - sc.start)), mv["seconds"]))
-            cam = CAMERA_EN.get(__import__("render").camera_of(sc, j, style), "slow camera push-in")
-            mdesc = (sc.meta or {}).get("motion", "")
-            action = mdesc if mdesc and mdesc not in ("ใช่", "yes", "true") else (sc.meta or {}).get("action", "")
+            mv = {**MOTION_DEFAULT, **config_motion(), **(p.get("motion") or {})}
+            spec = MOTION_MODELS.get(mv["model"], {"refs": False, "min": 2, "max": 15, "extra": {}})
+            # ยาวพอให้ครอบฉาก (render เล่นช้าลงได้ 1.35 เท่า) แต่ไม่เกินเพดานใน config
+            secs = int(min(max(spec["min"], math.ceil((sc.end - sc.start) / 1.35)), int(mv["seconds"]), spec["max"]))
+            ar = "9:16" if fmt == "9x16" else "16:9"
+            who = chars_in(sc, p, (brief.get("hero"), brief.get("side")))
+            refs = [{"role": "image_references", "value": c["sheet"]["job_id"]} for c in who
+                    if spec["refs"] and (c.get("sheet") or {}).get("job_id")]
+            cam = __import__("render").camera_of(sc, j, style)
+            params = {"model": mv["model"], "duration": secs, "aspect_ratio": ar,
+                      "prompt": i2v_prompt.build(sc.desc, sc.meta, who, cam, ar, meta.get("motionPrompt", ""), bool(refs)),
+                      "medias": [{"role": "start_image", "value": meta["job_id"]}] + refs, **spec["extra"]}
+            if not spec.get("no_resolution"):
+                params["resolution"] = mv["resolution"]
             items.append({"index": idx, "kind": "motion", "tool": "generate_video", "clip": ci, "scene": j + 1,
-                          "target": f"media/clip{ci}-scene{j + 1}.mp4",
-                          "params": {"model": mv["model"], "duration": secs, "resolution": mv["resolution"],
-                                     "aspect_ratio": "9:16" if fmt == "9x16" else "16:9",
-                                     "prompt": f"{action + '. ' if action else ''}{cam}, subtle natural character motion and "
-                                               f"environmental motion, keep characters, costumes and setting exactly as in the start "
-                                               f"frame, no text, no captions",
-                                     "medias": [{"role": "start_image", "value": meta["job_id"]}]}})
+                          "target": f"media/clip{ci}-scene{j + 1}.mp4", "params": params,
+                          "after": "check_i2v.py (สกิล cinematic-image-to-video) ตรวจตัวละคร/ภาพกระโดด ก่อน render"})
             idx += 1
         for j, sc in enumerate(scenes):  # ระยะ 2: ภาพต่อช็อต
             has = j < len(metas) and isinstance(metas[j], dict) and metas[j].get("media")
@@ -208,7 +235,11 @@ def cmd_plan(a):
     est = 0.0
     for it in items:
         m = it["params"].get("model", "")
-        est += VIDEO_COST_PER_SEC.get(m, 0) * it["params"].get("duration", 0) if it["kind"] == "motion" else COST.get(m, 0)
+        if it["kind"] == "motion":
+            rate = VIDEO_COST_PER_SEC.get(f"{m}@{it['params'].get('resolution', '')}", VIDEO_COST_PER_SEC.get(m, 0))
+            est += rate * it["params"].get("duration", 0)
+        else:
+            est += COST.get(m, 0)
     plan = {"project": os.path.abspath(a.project), "items": items, "estimatedCredits": round(est, 2),
             "notes": ["เช็กราคาด้วย estimate_audio_cost / estimate_image_cost / estimate_video_cost แล้วขออนุมัติก่อนสร้าง (เกินงบใน production.config.json ต้องถามผู้ใช้)",
                       "character: เขียน prompt ตามเวิร์กโฟลว์ character-sheet ด้วย entry + sheetStyle (หรือใช้ budgetParams เมื่อผู้ใช้เลือกโหมดประหยัด) ดูรูปทุกภาพก่อนไปต่อ",

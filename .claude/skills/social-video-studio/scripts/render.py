@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """เรนเดอร์คลิปจาก project.json (ส่งออกจากเว็บ video-studio-web หรือที่ agent เขียน) เป็น MP4 ด้วย ffmpeg
 
-ใช้:  python3 render.py project.json --out out/ [--formats 9x16,16x9] [--clips 1,3] [--fps 30]
+ใช้:  python3 render.py project.json --out out/ [--formats 9x16,16x9] [--clips 1,3] [--fps 24|30]
 
 ต่อคลิปจะได้  out/<n>_<slug>_<format>.mp4  + .srt + .ass
 - สไตล์ collage (ค่าเริ่มต้นแบบคลิปตัวอย่าง): พื้นสีต่อบท ฮาล์ฟโทน หน้าต่างภาพขอบกระดาษฉีก ป้ายปี หัวข้อ
@@ -733,7 +733,7 @@ def main(argv=None):
     ap.add_argument("--out", default="out")
     ap.add_argument("--formats", help="เช่น 9x16,16x9 (ค่าเริ่มต้นจาก project.formats)")
     ap.add_argument("--clips", help="เลขคลิป เช่น 1,3")
-    ap.add_argument("--fps", type=int, default=30)
+    ap.add_argument("--fps", type=int, help="ค่าเริ่มต้นจาก project.fps (ภาพยนตร์ 24) หรือ 30")
     ap.add_argument("--font", default="Kanit")
     a = ap.parse_args(argv)
     with open(a.project, encoding="utf-8") as fh:
@@ -761,7 +761,7 @@ def main(argv=None):
             print(f"ข้ามคลิป {ci + 1}: ยังไม่มีสคริปต์")
             continue
         for fmt in formats:
-            path, total, warn = render_clip(project, ci, clip, fmt.strip(), a.out, a.fps, font)
+            path, total, warn = render_clip(project, ci, clip, fmt.strip(), a.out, a.fps or int(project.get("fps") or 30), font)
             print(f"✔ {path}  ({total:.1f} วิ, ฟอนต์ {font})")
             for wmsg in warn:
                 print("  ⚠", wmsg)
