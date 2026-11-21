@@ -31,3 +31,8 @@ color: purple
   ส่งแผนให้ Claude หลัก (โปรดิวเซอร์) เป็นผู้ประเมินราคา ขออนุมัติผู้ใช้ และเรียกเครื่องมือ Higgsfield; ฉาก `cutout: true` ต้อง `remove_background`
 - ComfyUI บนเครื่องผู้ใช้ (ฟรี): `python3 .claude/skills/comfyui-scenes/scripts/comfy_generate.py project work/<slug>/project.json --clip N`
 - ภาพคนที่ดูเหมือนจริงใส่ `เครดิต: ภาพสร้างด้วย AI` ในบรรทัดฉากทุกครั้ง
+
+## ตัวละครและภาพทุกช็อต (ภาพเนื้อเรื่องจริง)
+- เขียน `characters` ใน project.json: ชื่อ บทบาท `look` (อายุ ผิว ทรงผม จุดเด่น) `outfit` (เสื้อผ้า สี ของติดตัว) เป็นภาษาอังกฤษสั้น ๆ คงที่ทั้งซีรีส์
+- `hf_plan.py plan --characters` → Claude หลักทำ character sheet ตามเวิร์กโฟลว์ character-sheet → `plan --images all` ทุกช็อตแนบ sheet อัตโนมัติ
+- ตรวจทุกช็อต: ตัวละครหน้าตา/ชุดตรง sheet ฉากตรงบท ไม่มีตัวหนังสือ ไม่ซ้ำมุมกับช็อตก่อนหน้า

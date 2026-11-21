@@ -59,6 +59,12 @@
       "music": "doc",
       "realEventsOnly": true
     },
+    "เรื่องเล่าตัวละคร": {
+      "project": "STORY",
+      "visualStyle": "toon3d",
+      "narratorStyle": "lamun",
+      "music": "musicbox"
+    },
     "เล่าเรื่องละมุน": {
       "project": "STORY",
       "visualStyle": "pastel3d",
@@ -75,5 +81,17 @@
   "formats": [
     "9x16",
     "16x9"
-  ]
+  ],
+  "motion": {
+    "_about": "วิดีโอจากภาพช็อต (image-to-video) ทำเฉพาะช็อตที่ 'เคลื่อนไหว:' ราคา ≈ 1 เครดิต/วินาที (grok_video_v15_lite)",
+    "model": "grok_video_v15_lite",
+    "resolution": "480p",
+    "seconds": 3,
+    "shots": "marked"
+  },
+  "characterSheet": {
+    "_about": "ออกแบบตัวละครครั้งเดียวต่อซีรีส์ ตามเวิร์กโฟลว์ character-sheet ของ Higgsfield (≈3.5 เครดิต/ตัว) โหมดประหยัดใช้ gpt_image_2_6 (≈0.75)",
+    "model": "seedream_5_5",
+    "budgetModel": "gpt_image_2_6"
+  }
 }

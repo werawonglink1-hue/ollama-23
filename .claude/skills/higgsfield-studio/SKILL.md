@@ -22,8 +22,35 @@ description: ต่อ Higgsfield (MCP) เข้ากับ social-video-studi
 | รายการ | โมเดล | เครดิตโดยประมาณ |
 |---|---|---|
 | เสียงพากย์ไทย 1 คลิป (~50–60 วิ) | `qwen_audio_tts` | ≈ 0.2 |
-| ภาพประกอบ 1 ภาพ | `gpt_image_2_6` | ≈ 0.75 |
+| ภาพประกอบ 1 ภาพ / 1 ช็อต | `gpt_image_2_6` (1k) | ≈ 0.75 |
+| character sheet 1 ตัว (ครั้งเดียวต่อซีรีส์) | `seedream_5_5` 2K | ≈ 3.5 |
+| วิดีโอจากภาพ 3 วิ 480p / 5 วิ 720p | `grok_video_v15_lite` | ≈ 3 / 5 |
+| วิดีโอ 5 วิ | `kling3_0_turbo` / `seedance_2_5` | ≈ 7.5 / 35 |
 | เพลงประกอบ 60 วิ | `elevenlabs_music_v2_5` | ≈ 8.7 (แพง ใช้เมื่อผู้ใช้ขอเท่านั้น) |
+
+## ภาพเนื้อเรื่องจริง: ตัวละคร → ภาพทุกช็อต → วิดีโอ (3 ระยะ)
+
+ระยะหลังใช้ job_id ของระยะก่อน จึงต้องทำทีละระยะ: plan → estimate → สร้าง → jobs_wait → fetch (เก็บ job_id) → ระยะถัดไป
+
+```bash
+H=.claude/skills/higgsfield-studio/scripts/hf_plan.py
+python3 $H plan project.json --characters > plan1.json     # 1) character sheet ต่อตัว (ใช้ซ้ำทั้งซีรีส์)
+python3 $H plan project.json --voice --images all > plan2.json   # 2) ภาพทุกช็อต + เสียงพากย์ (แนบ sheet ของตัวละครในช็อต)
+python3 $H plan project.json --motion marked > plan3.json   # 3) วิดีโอจากภาพช็อตที่มี "เคลื่อนไหว:" (key = + ช็อตแรก, all = ทุกช็อต)
+python3 $H fetch planN.json resultsN.json                    # ผลรูปแบบ {"0": {"url": "...", "job_id": "..."}}
+```
+
+1. **ตัวละคร**: `project.characters` = `[{name, role, look, outfit}]` → ทำตามเวิร์กโฟลว์ `character-sheet` ของ Higgsfield
+   (`get_workflow_instructions`) ด้วย `entry` และ `sheetStyle` ในแผน (การ์ตูน 3D = Classic 3D, สมจริง = Realism)
+   ค่าเริ่มต้น seedream_5_5 2K 16:9 ≈ 3.5 เครดิต/ตัว; โหมดประหยัด `budgetParams` (gpt_image_2_6 ≈ 0.75) ใช้เมื่อผู้ใช้เลือก
+   ดู sheet ทุกภาพก่อนไปต่อ: ตัวละครเดียว หน้าตา/ชุดตรงคำบรรยาย · ห้ามเลียนแบบคนจริงหรือตัวละครที่มีลิขสิทธิ์
+2. **ภาพทุกช็อต**: prompt = ช็อต + ฉาก + ท่าทาง + ตัวละครในช็อต (รูปลักษณ์คงที่) + สไตล์ · `medias` แนบ sheet ของตัวละครในช็อต
+   (gpt_image_2_6 ≈ 0.75/ช็อต) fetch ใส่ `media` + `job_id` ให้แต่ละฉาก และติด `เครดิต: ภาพสร้างด้วย AI (Higgsfield)` ให้เอง
+3. **วิดีโอ**: `generate_video` grok_video_v15_lite (start_image = ภาพช็อต) ≈ 1 เครดิต/วินาที (3 วิ 480p = 3)
+   ค่าใน `production.config.json` → `motion` · render.py เล่นช้าลง/ค้างเฟรมสุดท้ายเมื่อวิดีโอสั้นกว่าฉาก
+   ทำเฉพาะช็อตสำคัญ: คลิป 60 วิ 8 ช็อตถ้าทำวิดีโอทุกช็อต 5 วิ ≈ 40 เครดิต
+
+ราคาตัวอย่างต่อคลิป 60 วิ (8 ช็อต): ภาพ 8 × 0.75 = 6 · วิดีโอ 2 ช็อต × 3 วิ = 6 · เสียง 0.2 → ≈ 12 เครดิต (+ sheet 3.5/ตัว ครั้งแรกของซีรีส์)
 
 ## สายงานเต็ม
 

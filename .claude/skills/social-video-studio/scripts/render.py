@@ -39,6 +39,7 @@ PALETTES = {  # ท้องฟ้าบน, ล่าง, สีจุด/ว�
     "neon-night": ["#060b2e", "#16307a", "#22e3ff", "#ff4fb3", "#7b5cff", "#ffe066"],
     "film":       ["#3b2a20", "#c79a6b", "#f1d9b0", "#8a5a3c", "#e8c79c", "#fff3dc"],
     "cinematic":  ["#0e1a24", "#3a3027", "#e0a85b", "#2f5d6b", "#c96f3b", "#f3e3c3"],
+    "toon3d":     ["#6fa8dc", "#f6d7b0", "#f28c6b", "#5bb39a", "#ffd166", "#ffffff"],
 }
 SCALE = bs.FORMATS
 VIDEO_EXT = (".mp4", ".mov", ".webm", ".mkv", ".m4v")
@@ -49,7 +50,8 @@ CAMERA = {"ดันเข้า": "push-in", "ซูมเข้า": "push-in"
           "แพนซ้าย": "pan-left", "pan-left": "pan-left", "แพนขวา": "pan-right", "pan-right": "pan-right",
           "เงยขึ้น": "tilt-up", "tilt-up": "tilt-up", "ก้มลง": "tilt-down", "tilt-down": "tilt-down",
           "นิ่ง": "static", "static": "static"}
-CAMERA_CYCLE = {"cinematic": ["push-in", "pan-right", "tilt-up", "pull-out", "pan-left", "tilt-down"]}
+CAMERA_CYCLE = {"cinematic": ["push-in", "pan-right", "tilt-up", "pull-out", "pan-left", "tilt-down"],
+                "toon3d": ["push-in", "pan-right", "static", "pull-out", "pan-left", "push-in"]}
 # ทรานซิชันเข้าฉาก: "| เปลี่ยน: ดำ" (ตามเหตุการณ์ เช่น ข้ามเวลา=ดำ, ย้อนอดีต=ขาว, ตื่นเต้น=ซูม, ที่เดิม=ละลาย)
 XFADE = {"ตัด": "cut", "cut": "cut", "จาง": "fade", "fade": "fade", "ดำ": "fadeblack", "จางดำ": "fadeblack",
          "fadeblack": "fadeblack", "ขาว": "fadewhite", "แฟลช": "fadewhite", "fadewhite": "fadewhite",
@@ -57,7 +59,8 @@ XFADE = {"ตัด": "cut", "cut": "cut", "จาง": "fade", "fade": "fade", 
          "สไลด์นุ่ม": "smoothleft", "smoothleft": "smoothleft", "ปัด": "wipeleft", "wipeleft": "wipeleft",
          "ซูม": "zoomin", "zoomin": "zoomin", "วงกลม": "circleopen", "circleopen": "circleopen",
          "เบลอ": "hblur", "hblur": "hblur"}
-XFADE_CYCLE = {"collage": ["slideleft"], "cinematic": ["fade", "dissolve", "smoothleft", "fadeblack", "zoomin", "fade"]}
+XFADE_CYCLE = {"collage": ["slideleft"], "cinematic": ["fade", "dissolve", "smoothleft", "fadeblack", "zoomin", "fade"],
+               "toon3d": ["cut", "fade", "cut", "smoothleft", "cut", "fadeblack"]}
 XFADE_LEN = {"cut": 0.0, "fadeblack": 0.7, "fadewhite": 0.5, "dissolve": 0.6, "fade": 0.5, "zoomin": 0.5}
 # โทนสี/แสงทั้งคลิป (project.grade): film = ฟิล์มอุ่น-เงาฟ้าอมเขียว คมขึ้น ขอบมืด เกรนบาง, soft = สว่างนุ่มละมุนตา
 GRADES = {"film": "eq=contrast=1.06:saturation=0.9:gamma=0.98,colorbalance=rs=-0.03:bs=0.04:rh=0.05:gh=0.01:bh=-0.05,"
@@ -65,7 +68,7 @@ GRADES = {"film": "eq=contrast=1.06:saturation=0.9:gamma=0.98,colorbalance=rs=-0
           "soft": "eq=contrast=0.97:brightness=0.015:saturation=0.96,colorbalance=rh=0.03:bh=-0.02,"
                   "unsharp=5:5:0.25:5:5:0,vignette=PI/6",
           "none": ""}
-GRADE_DEFAULT = {"cinematic": "film", "film": "film"}
+GRADE_DEFAULT = {"cinematic": "film", "film": "film", "toon3d": "soft"}
 
 
 def run(cmd):
@@ -362,8 +365,8 @@ def collage_segment(tmp, idx, scene, dur, w, h, fps, clip_index, framed, media):
         r, g, b = (v / 255 for v in mix(col, "#ffffff", 0.5))
         duo = f",hue=s=0,eq=contrast=1.25,colorchannelmixer=rr={r:.3f}:rg=0:rb=0:gr=0:gg={g:.3f}:gb=0:br=0:bg=0:bb={b:.3f}"
     if media.lower().endswith(VIDEO_EXT):
-        src = ["-stream_loop", "-1", "-i", media]
-        mf = f"[1:v]scale={bw2}:{bh2}:force_original_aspect_ratio=increase,crop={bw2}:{bh2},fps={fps},setsar=1{duo}[m]"
+        src = ["-i", media]
+        mf = f"[1:v]{fit_video(media, dur)}scale={bw2}:{bh2}:force_original_aspect_ratio=increase,crop={bw2}:{bh2},fps={fps},setsar=1{duo}[m]"
     else:
         src = ["-i", media]
         W2, H2 = int(bw2 * 1.15) // 2 * 2, int(bh2 * 1.15) // 2 * 2
@@ -395,12 +398,31 @@ def camera_expr(motion, frames):
             "static": ("1.04", cx, cy)}[motion]
 
 
+def media_duration(path):
+    r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", path],
+                       capture_output=True, text=True)
+    try:
+        return float(r.stdout.strip())
+    except ValueError:
+        return 0.0
+
+
+def fit_video(path, need):
+    """ช็อตวิดีโอ (เช่นจาก AI 3–5 วิ) สั้นกว่าฉาก: เล่นช้าลงได้ถึง 1.35 เท่า แล้วค้างเฟรมสุดท้ายไว้ ไม่วนซ้ำ (วนแล้วดูออกว่าเป็นลูป)"""
+    vd = media_duration(path)
+    if vd <= 0 or vd >= need:
+        return ""
+    factor = min(1.35, need / vd)
+    hold = max(0.0, need - vd * factor) + 0.1
+    return f"setpts={factor:.4f}*PTS,tpad=stop_mode=clone:stop_duration={hold:.3f},"
+
+
 def scene_segment(tmp, idx, scene, dur, w, h, fps, style, seed, media):
     out = os.path.join(tmp, f"seg{idx:03d}.mp4")
     frames = max(1, int(round(dur * fps)))
     if media and os.path.exists(media) and media.lower().endswith(VIDEO_EXT):
-        vf = f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},fps={fps},setsar=1"
-        run(["ffmpeg", "-y", "-v", "error", "-stream_loop", "-1", "-i", media, "-frames:v", str(frames),
+        vf = f"{fit_video(media, dur)}scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},fps={fps},setsar=1"
+        run(["ffmpeg", "-y", "-v", "error", "-i", media, "-frames:v", str(frames),
              "-vf", vf, "-an", "-c:v", "libx264", "-preset", "veryfast", "-pix_fmt", "yuv420p", out])
         return out
     img = media if media and os.path.exists(media) else os.path.join(tmp, f"bg{idx:03d}.png")

@@ -136,6 +136,8 @@ body.no-downloads #dlProject,body.no-downloads #dlAllSrt,body.no-downloads #dlAl
     <div><label for="place">ฉาก / สถานที่</label><input id="place" placeholder="เช่น หมู่บ้านริมโขง"></div>
     <div><label for="series">ชื่อซีรีส์ / ช่อง <small>(แถบบน)</small></label><input id="series" placeholder="เช่น ตำนานคนสู้ชีวิต"></div>
   </div>
+  <label for="characters">ตัวละคร <small>(บรรทัดละคน: ชื่อ | บทบาท | รูปลักษณ์ | ชุด · ใช้ทำภาพให้หน้าตาเหมือนกันทุกช็อต)</small></label>
+  <textarea id="characters" rows="3" placeholder="ต้นกล้า | ตัวเอก | Thai boy, 12, tan skin, buzz-cut hair, big bright eyes | faded white school shirt, navy shorts, barefoot"></textarea>
   <label for="message">ข้อคิด / สิ่งที่อยากสื่อ <small>(ไม่บังคับ)</small></label>
   <input id="message" placeholder="เช่น ถ้ามีคนบอกว่าทำไม่ได้ เรื่องนี้คือคำตอบ">
   </details>
@@ -256,6 +258,8 @@ const VISUALS = {
                  prompt:"layered paper-cut craft, minimal shapes, soft shadows between layers"},
   "neon-night": {name:"เมืองกลางคืนนีออน", pal:["#060b2e","#16307a","#22e3ff","#ff4fb3","#7b5cff","#ffe066"], city:true, stars:true, night:true,
                  prompt:"quiet night city street, glowing neon lights, deep blue, bokeh, dreamy"},
+  "toon3d":     {name:"การ์ตูน 3D เล่าเรื่อง (ตัวละคร + ฉากตามบท)", caption:"phrase", hi:"#ffd21f", pal:["#6fa8dc","#f6d7b0","#f28c6b","#5bb39a","#ffd166","#ffffff"], city:true, clouds:true, toon:true, grade:"soft", subY:{"9x16":0.80,"16x9":0.86},
+                 prompt:"stylized 3D animated short film still, expressive cartoon characters with clean simple shading, realistic Thai location, soft cinematic lighting"},
   "cinematic":  {name:"Cinematic สมจริงแบบภาพยนตร์ (กล้องเคลื่อน ปรับสีฟิล์ม)", caption:"word", hi:"#ffc96b", pal:["#0e1a24","#3a3027","#e0a85b","#2f5d6b","#c96f3b","#f3e3c3"], city:true, grain:true, cinematic:true, grade:"film",
                  prompt:"cinematic realism, photorealistic film still, natural lighting, 35mm anamorphic lens, shallow depth of field, film color grading"},
   "film":       {name:"ฟิล์มเก่าอบอุ่น", pal:["#3b2a20","#c79a6b","#f1d9b0","#8a5a3c","#e8c79c","#fff3dc"], city:true, grain:true,
@@ -288,11 +292,13 @@ const PAUSE = {"":0.30,"/":0.35,"//":0.80,"///":1.40};
 const CPS = {slow:7.5, normal:9.0, fast:10.5};
 const PAUSE_SCALE = {slow:1.0, normal:0.75, fast:0.55}, MIN_DUR = {slow:1.0, normal:0.85, fast:0.7}; // ช้า = เว้นเต็มที่ (ละมุน), ปกติ = กระชับแบบสารคดี
 const EMO = {"ช้าลง":1.2,"กระซิบ":1.15,"เศร้า":1.15,"ลุ้น":1.1,"ตื่นเต้น":0.92,"ขำ":0.95,"ยิ้ม":1.0};
-const KEYMAP = {"ป้าย":"badge","ปี":"badge","หัวข้อ":"title","ภาพ":"layout","เลย์เอาต์":"layout","เครดิต":"credit","สี":"color","โทน":"tone","กล้อง":"camera","เปลี่ยน":"transition","ทรานซิชัน":"transition","ซ้ำ":"repeat"};
+const KEYMAP = {"ป้าย":"badge","ปี":"badge","หัวข้อ":"title","ภาพ":"layout","เลย์เอาต์":"layout","เครดิต":"credit","สี":"color","โทน":"tone","กล้อง":"camera","เปลี่ยน":"transition","ทรานซิชัน":"transition","ซ้ำ":"repeat","ตัวละคร":"cast","ช็อต":"shot","ท่าทาง":"action","แอ็กชัน":"action","เคลื่อนไหว":"motion"};
 /* กล้องเคลื่อนและทรานซิชันต่อฉาก (ตรงกับ CAMERA / XFADE ใน render.py) */
 const CAMERA = {"ดันเข้า":"push-in","ซูมเข้า":"push-in","push-in":"push-in","ถอยออก":"pull-out","ซูมออก":"pull-out","pull-out":"pull-out","แพนซ้าย":"pan-left","pan-left":"pan-left","แพนขวา":"pan-right","pan-right":"pan-right","เงยขึ้น":"tilt-up","tilt-up":"tilt-up","ก้มลง":"tilt-down","tilt-down":"tilt-down","นิ่ง":"static","static":"static"};
 const XFADE = {"ตัด":"cut","cut":"cut","จาง":"fade","fade":"fade","ดำ":"fadeblack","จางดำ":"fadeblack","fadeblack":"fadeblack","ขาว":"fadewhite","แฟลช":"fadewhite","fadewhite":"fadewhite","ละลาย":"dissolve","dissolve":"dissolve","ซูม":"zoomin","zoomin":"zoomin","สไลด์":"slideleft","slideleft":"slideleft","สไลด์นุ่ม":"smoothleft","smoothleft":"smoothleft","ปัด":"wipeleft","wipeleft":"wipeleft","วงกลม":"circleopen","เบลอ":"hblur"};
-const CAMERA_CYCLE = {cinematic:["push-in","pan-right","tilt-up","pull-out","pan-left","tilt-down"]}, XFADE_CYCLE = {cinematic:["fade","dissolve","smoothleft","fadeblack","zoomin","fade"]};
+const CAMERA_CYCLE = {cinematic:["push-in","pan-right","tilt-up","pull-out","pan-left","tilt-down"], toon3d:["push-in","pan-right","static","pull-out","pan-left","push-in"]},
+      XFADE_CYCLE = {cinematic:["fade","dissolve","smoothleft","fadeblack","zoomin","fade"], toon3d:["cut","fade","cut","smoothleft","cut","fadeblack"]};
+const SHOT_EN = {"ไกลมาก":"extreme wide establishing shot","กว้าง":"wide shot","กลาง":"medium shot","ใกล้":"medium close-up","โคลสอัพ":"close-up on the face","มุมสูง":"high-angle shot","มุมต่ำ":"low-angle shot","ข้ามไหล่":"over-the-shoulder shot","มุมมองตัวละคร":"point-of-view shot"};
 const XFADE_LEN = {cut:0, fadeblack:0.7, fadewhite:0.5, dissolve:0.6, fade:0.5, zoomin:0.5};
 const GRADE_CSS = {film:"contrast(1.06) saturate(0.9) sepia(0.08)", soft:"contrast(0.97) brightness(1.02) saturate(0.96)"};
 const COMBINING = /[ัิ-ฺ็-๎]/;
@@ -542,6 +548,10 @@ ${b.timeline || "-"}
 ${structure}
 ${rules}
 
+${(b.characters||[]).length ? `ตัวละคร (ใช้ชื่อตามนี้เท่านั้น): ${b.characters.map(c=>c.name+(c.role?" ("+c.role+")":"")).join(", ")}
+- ทุกบรรทัดฉากต้องมี ตัวละคร: (ชื่อที่อยู่ในช็อต คั่นด้วย ,) · ช็อต: กว้าง/กลาง/ใกล้/โคลสอัพ/มุมต่ำ/มุมสูง/ข้ามไหล่ (สลับให้หลากหลาย) · ท่าทาง: สิ่งที่ตัวละครทำในช็อตสั้น ๆ
+- ช็อตสำคัญ 1–2 ช็อตต่อคลิป (hook / จุดพีค) ใส่ เคลื่อนไหว: การเคลื่อนไหวที่อยากเห็น (จะถูกสร้างเป็นวิดีโอ)
+- บทพูดของตัวละครให้ขึ้นบรรทัดใหม่ด้วย @ชื่อ: เช่น @แม่: (เศร้า) ลูกจ๋า / พักก่อนนะ //` : ""}
 ตอบเป็น JSON อย่างเดียว: {"clips":[{"title":"...","angle":"...","script":"...ทั้งสคริปต์ ใช้ \\n ขึ้นบรรทัด..."}]}`;
   if (RT.viewer){
     await RT.ready;
@@ -768,7 +778,7 @@ function drawGeneric(clip, g, w, h, fmt, t, opt){
   if (V.cinematic && fmt==="16x9"){ const bh=Math.round((h-w/2.39)/2); g.fillStyle="#000"; g.fillRect(0,0,w,bh); g.fillRect(0,h-bh,w,bh); }
   if (opt.banner) drawBanner(g,w,h,fmt,clip.title);
   const c = tl.chunks.find(c=>t>=c.start && t<c.showEnd);
-  if (c) drawCaption(g, c, t, w/2, h*SUB_Y[fmt], Math.round(Math.min(w,h)*(fmt==="9x16"?0.085:0.075)*(V.spiral?1.12:1)), w*0.84, opt);
+  if (c) drawCaption(g, c, t, w/2, h*((V.subY&&V.subY[fmt])||SUB_Y[fmt]), Math.round(Math.min(w,h)*(fmt==="9x16"?0.085:0.075)*(V.spiral||V.toon?1.12:1)), w*0.84, opt);
   return si;
 }
 /* ทรานซิชันแบบเดียวกับ xfade ของ ffmpeg (ส่วนที่ใช้บ่อย) p = 0..1 */
@@ -982,15 +992,16 @@ class Clip {
   refresh(){
     const tl=this.tl, fast = tl.chunks.filter(c=>baseLen(c.text)/Math.max(0.1,c.showEnd-c.start)>12).length;
     this.el.querySelector("[data-m]").innerHTML = `${tl.chunks.length} ท่อนซับ · ${tl.scenes.length} ฉาก · ยาว ${tl.total.toFixed(1)} วินาที · ${this.fmt.replace("x",":")}`+
-      (this.voice?` · เสียงพากย์: ${this.voiceName.replace(/[<>&]/g,"")}`:"")+(this.timings?" · ซับซิงก์กับเสียงจริงแล้ว":"")+(fast?` · <span class="warn">⚠ ${fast} ท่อนเร็วเกินไป ใส่ / เพิ่ม</span>`:"");
+      (this.voice?` · เสียงพากย์: ${this.voiceName.replace(/[<>&]/g,"")}`:"")+(this.timings?" · ซับซิงก์กับเสียงจริงแล้ว":"")+(fast?` · <span class="warn">⚠ ${fast} ท่อนเร็วเกินไป ใส่ / เพิ่ม</span>`:"")+
+      ((miss=>miss?` · <span class="warn">🖼 ยังไม่มีภาพเนื้อเรื่อง ${miss}/${tl.scenes.length} ช็อต (ตอนนี้ใช้ภาพแทนที่): ใส่รูป/วิดีโอ หรือให้ทีมใน Claude Code สร้างตัวละคร + ภาพทุกช็อต + วิดีโอ</span>`:"")(tl.scenes.filter((s,j)=>!this.media[j]).length));
     const pc = tl.chunks[Math.min(1, tl.chunks.length-1)], pt = pc ? Math.min(pc.start + (pc.end-pc.start)*0.95, pc.showEnd-0.05) : 0.5;
     drawFrame(this, this.g, this.cv.width, this.cv.height, this.fmt, Math.max(pt, tl.scenes[0] ? Math.min(0.9, tl.total) : 0), this.optDraw());
     const sb = this.el.querySelector("[data-sb]"), chars = [this.opt.brief.hero, this.opt.brief.side].filter(Boolean).join(", ");
     sb.innerHTML = ""; tl.scenes.forEach((s,j)=>{ const d=document.createElement("div"); d.className="scene";
       const lines = tl.chunks.filter(c=>c.scene===j).map(c=>c.text.replace(/\*/g,"")).join(" ");
-      const prompt = `${s.desc}. ${VISUALS[this.opt.visual].prompt}${chars?`, characters: ${chars}`:""}, ${this.fmt==="9x16"?"vertical 9:16":"16:9 widescreen"}, no text`;
+      const prompt = shotPrompt(this.opt, s, j, this.fmt); void chars;
       d.innerHTML = `<b></b><div></div><code></code><button style="margin-top:6px;font-size:12px">คัดลอก prompt</button>`;
-      d.querySelector("b").textContent = `ฉาก ${j+1} · ${s.start.toFixed(1)}–${s.end.toFixed(1)} วิ${s.meta.badge?" · ป้าย "+s.meta.badge:""}${s.meta.title?" · หัวข้อ "+s.meta.title:""}${this.media[j]?" · 🖼 มีสื่อแล้ว":""}`;
+      d.querySelector("b").textContent = `ช็อต ${j+1} · ${s.start.toFixed(1)}–${s.end.toFixed(1)} วิ${s.meta.shot?" · "+s.meta.shot:""}${s.meta.cast?" · ตัวละคร "+s.meta.cast:""}${s.meta.motion?" · 🎬 ทำเป็นวิดีโอ":""}${s.meta.badge?" · ป้าย "+s.meta.badge:""}${s.meta.title?" · หัวข้อ "+s.meta.title:""}${this.media[j]?" · 🖼 มีสื่อแล้ว":""}`;
       d.querySelector("div").textContent = `${s.desc}: “${lines}”`; d.querySelector("code").textContent = prompt;
       const code = d.querySelector("code"), pick = () => { const r = document.createRange(); r.selectNodeContents(code); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); status("เลือกข้อความไว้แล้ว กด Ctrl+C เพื่อคัดลอก"); };
       d.querySelector("button").onclick = () => { try { const p = navigator.clipboard?.writeText(prompt); p ? p.then(() => status("คัดลอก prompt แล้ว"), pick) : pick(); } catch { pick(); } };
@@ -1152,12 +1163,23 @@ async function download(name, blob){
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
   return true;
 }
-const FIELDS = ["topic","timeline","hero","side","place","series","message","count","length","visual","narrator","format","caption","music","speed","sfx","banner","engine","model"];
+const FIELDS = ["topic","timeline","hero","side","place","series","characters","message","count","length","visual","narrator","format","caption","music","speed","sfx","banner","engine","model"];
 function readOpt(){
   const v = id => $(id).value;
-  return {brief:{topic:v("topic").trim(), timeline:v("timeline").trim(), hero:v("hero").trim(), side:v("side").trim(), place:v("place").trim(), message:v("message").trim()},
+  return {brief:{topic:v("topic").trim(), timeline:v("timeline").trim(), hero:v("hero").trim(), side:v("side").trim(), place:v("place").trim(), message:v("message").trim(), characters:parseCharacters(v("characters"))},
     series:v("series").trim(), count:+v("count"), len:+v("length"), visual:v("visual"), narrator:v("narrator"), format:v("format"), caption:v("caption"), music:v("music"), speed:v("speed"),
     sfx:v("sfx")==="on", banner:v("banner")==="on", engine:v("engine"), model:v("model"), key:v("apikey").trim()};
+}
+function parseCharacters(txt){ // "ชื่อ | บทบาท | รูปลักษณ์ | ชุด" ต่อบรรทัด → [{name, role, look, outfit}]
+  return (txt||"").split(/\n/).map(l=>l.split("|").map(x=>x.trim())).filter(p=>p[0]).map(([name,role="",look="",outfit=""])=>({name, role, look, outfit}));
+}
+function shotPrompt(opt, s, j, fmt){ // prompt ภาพต่อช็อต: ช็อต + ฉาก + ท่าทาง + ตัวละครในช็อต (รูปลักษณ์คงที่) + สไตล์
+  const chars = opt.brief.characters || [], named = (s.meta.cast||"").split(/[,、/]| และ /).map(x=>x.trim()).filter(Boolean);
+  const who = (named.length ? named : chars.map(c=>c.name).filter(n=>s.desc.includes(n))).map(n=>chars.find(c=>c.name===n) || {name:n});
+  const shot = SHOT_EN[(s.meta.shot||"").trim()] || s.meta.shot || ["wide shot","medium shot","close-up on the face","medium close-up","low-angle shot","over-the-shoulder shot"][j%6];
+  const people = who.map(c=>`${c.name}${c.look?": "+c.look:""}${c.outfit?", wearing "+c.outfit:""}`).join("; ");
+  const fallback = [opt.brief.hero, opt.brief.side].filter(Boolean).join(", ");
+  return `${shot}. ${s.desc}${s.meta.action?". "+s.meta.action:""}${people?`. Characters (same design in every shot): ${people}`:(fallback?`. Characters: ${fallback}`:"")}. ${VISUALS[opt.visual].prompt}, ${fmt==="9x16"?"vertical 9:16":"16:9 widescreen"}, no text`;
 }
 function clipMeta(opt, i, n){
   if (opt.narrator === "doc") return docMeta(opt.brief, i, n);
@@ -1193,7 +1215,8 @@ $("dlProject").onclick = ()=>{
     formats:fm, music:o.music, speed:o.speed, clipCount:state.clips.length,
     clips: state.clips.map(c=>({title:c.title, angle:c.angle, script:c.script, voice:c.voiceBlob?c.voiceBlob.name:null,
       timings:c.timings ? c.timings.map(x=>x?{start:+x.start.toFixed(3)}:null) : null,
-      scenes:c.tl.scenes.map((s,j)=>({desc:s.desc, prompt:`${s.desc}. ${VISUALS[o.visual].prompt}`, media:c.media[j]?.dataset?.name||null, motion:["zoom-in","pan-right","zoom-out","pan-left"][j%4]}))}))};
+      scenes:c.tl.scenes.map((s,j)=>({desc:s.desc, prompt:shotPrompt(o, s, j, fm[0]), media:c.media[j]?.dataset?.name||null}))})),
+    characters:(o.brief.characters||[])};
   download("project.json", new Blob([JSON.stringify(project,null,2)],{type:"application/json"}))
     .then(ok => ok && status("ได้ project.json แล้ว วางไฟล์เสียงหรือรูปที่ระบุไว้ในโฟลเดอร์เดียวกัน แล้วรัน: python3 render.py project.json --out out/"));
 };
@@ -1206,6 +1229,7 @@ const GENRES = {
   "สารคดี Cinematic":       {visual:"cinematic", narrator:"doc", music:"doc", real:true},
   "เรื่องราวบุคคลสำคัญ":     {visual:"collage", narrator:"doc", music:"doc", real:true},
   "ข่าวกระแสสังคม":         {visual:"collage", narrator:"doc", music:"doc", news:true},
+  "เรื่องเล่าตัวละคร (การ์ตูน 3D)": {visual:"toon3d", narrator:"lamun", music:"musicbox"},
   "เล่าเรื่องละมุน":         {visual:"pastel3d", narrator:"lamun", music:"musicbox"},
   "นิทานเด็ก (ครูหน่อง)":    {visual:"watercolor", narrator:"kru-nong", music:"musicbox"},
   "แบบเรียนไทย (มานะ)":      {visual:"papercut", narrator:"mana", music:"playful"},
@@ -1214,6 +1238,13 @@ const GENRES = {
 };
 /* เรื่องแต่งสำรองเมื่อยังไม่มี Claude (ใช้กับแนวเรื่องแต่งเท่านั้น ไม่แต่งเรื่องจริง) */
 const LOCAL_IDEAS = {
+  "เรื่องเล่าตัวละคร (การ์ตูน 3D)": [
+    {topic:"พนักงานออฟฟิศที่ต้องเลือกระหว่างงานกับฝัน (เรื่องสมมติ)", hero:"มิ้นท์", side:"หัวหน้าใจร้อน", place:"รถไฟฟ้าและออฟฟิศกลางเมือง", series:"เรื่องเล่าคนเมือง", message:"บางครั้งการหยุดคือการเริ่มใหม่",
+     characters:[{name:"มิ้นท์", role:"ตัวเอก", look:"Thai woman, 26, shoulder-length black hair, determined eyes", outfit:"white short-sleeve blouse, black pencil skirt, staff ID lanyard, canvas tote bag"},
+                 {name:"หัวหน้า", role:"ตัวละครรอง", look:"Thai man, 45, round glasses, thinning hair", outfit:"grey suit, loose tie"}]},
+    {topic:"เด็กส่งข้าวกล่องกับจดหมายลึกลับ (เรื่องสมมติ)", hero:"ภูมิ", side:"ยายร้านข้าวแกง", place:"ตลาดเช้าและซอยเก่า", series:"เรื่องเล่าคนเมือง", message:"ความใจดีเล็ก ๆ เดินทางได้ไกล",
+     characters:[{name:"ภูมิ", role:"ตัวเอก", look:"Thai boy, 15, messy hair, freckles, bright smile", outfit:"orange delivery jacket, shorts, sneakers, bicycle helmet"},
+                 {name:"ยาย", role:"ตัวละครรอง", look:"Thai grandmother, 70, silver bun, kind wrinkles", outfit:"floral blouse, apron"}]}],
   "เล่าเรื่องละมุน": [
     {topic:"ร้านขนมปังที่เปิดเฉพาะวันฝนตก (เรื่องสมมติ)", hero:"", side:"ลุงเจ้าของร้าน", place:"ซอยเล็กริมคลอง", series:"เรื่องเล่าก่อนนอน", message:"ความอบอุ่นมักมาในวันที่ฟ้าครึ้ม"},
     {topic:"ไปรษณีย์ที่ส่งจดหมายถึงตัวเองในอีกสิบปี (เรื่องสมมติ)", hero:"", side:"บุรุษไปรษณีย์คนสุดท้าย", place:"เมืองเล็กบนเขา", series:"เรื่องเล่าก่อนนอน", message:"วันนี้คือจดหมายที่อนาคตรออ่าน"},
@@ -1239,6 +1270,7 @@ $("topic").addEventListener("input", briefSummary);
 function fillBrief(x){
   $("topic").value = x.topic || ""; $("timeline").value = Array.isArray(x.timeline) ? x.timeline.join("\n") : (x.timeline || "");
   ["hero","side","place","series","message"].forEach(k=>{ $(k).value = x[k] || ""; });
+  $("characters").value = (x.characters||[]).map(c=>[c.name, c.role, c.look, c.outfit].map(v=>String(v||"").replace(/\|/g,"/")).join(" | ")).join("\n");
   $("exampleNote").hidden = true; briefSummary();
 }
 function ideaPrompt(genre, n, len, G){
@@ -1247,7 +1279,8 @@ function ideaPrompt(genre, n, len, G){
 - ${G.real ? "ต้องเป็นเรื่องจริง ใช้เฉพาะข้อเท็จจริงที่มั่นใจและตรวจสอบได้ ห้ามแต่งตัวเลข ปี ชื่อ หรือเหตุการณ์ ไทม์ไลน์ใส่ปีจริง (พ.ศ. หรือ ค.ศ. ให้ระบุ)" : "เป็นเรื่องแต่งทั้งหมด ตั้งชื่อตัวละครใหม่ ห้ามใช้ชื่อหรือเรื่องของคนจริง ใส่ (เรื่องสมมติ) ท้ายหัวข้อ"}
 - หลีกเลี่ยงเรื่องการเมือง สถาบันพระมหากษัตริย์ คดีที่ยังไม่ตัดสิน ความรุนแรง และข้อมูลส่วนตัวของคนทั่วไป
 - timeline 5–8 บรรทัด รูปแบบ "ปีหรือช่วงเวลา | หัวข้อสั้น 2–4 คำ | เล่าเหตุการณ์ เว้นวรรคระหว่างคำ" (เรื่องแต่งใช้ช่วงเวลาเช่น "วันแรก" "ปีที่ 3")
-ตอบเป็น JSON อย่างเดียว: {"topic":"...","timeline":["...","..."],"hero":"ชื่อตัวเอก","side":"ตัวละครรอง","place":"ฉาก/สถานที่","series":"ชื่อซีรีส์สั้น ๆ","message":"ข้อคิด 1 ประโยค","why":"ทำไมเรื่องนี้น่าทำตอนนี้ 1 ประโยค","sources":["แหล่งที่ใช้ตรวจสอบได้ (เฉพาะเรื่องจริง)"]}`;
+- characters: ตัวละครหลัก 1–4 ตัว ออกแบบรูปลักษณ์ให้จำง่ายและคงที่ทุกช็อต (look/outfit เขียนเป็นภาษาอังกฤษสั้น ๆ สำหรับสร้างภาพ: อายุ ผิว ทรงผม จุดเด่น / เสื้อผ้า สี ของติดตัว)${G.real ? " ถ้าเป็นบุคคลจริงในประวัติศาสตร์ ให้ออกแบบเป็นภาพประกอบเชิงการ์ตูน ไม่เลียนแบบภาพถ่ายจริง" : ""}
+ตอบเป็น JSON อย่างเดียว: {"topic":"...","timeline":["...","..."],"hero":"ชื่อตัวเอก","side":"ตัวละครรอง","place":"ฉาก/สถานที่","series":"ชื่อซีรีส์สั้น ๆ","message":"ข้อคิด 1 ประโยค","characters":[{"name":"...","role":"...","look":"...","outfit":"..."}],"why":"ทำไมเรื่องนี้น่าทำตอนนี้ 1 ประโยค","sources":["แหล่งที่ใช้ตรวจสอบได้ (เฉพาะเรื่องจริง)"]}`;
 }
 async function claudeJSON(prompt){
   if (RT.viewer){

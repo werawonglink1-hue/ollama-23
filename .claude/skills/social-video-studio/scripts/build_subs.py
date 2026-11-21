@@ -35,9 +35,11 @@ EMOTION_FACTOR = {
 }
 FORMATS = {"9x16": (1080, 1920), "16x9": (1920, 1080), "1x1": (1080, 1080), "4x5": (1080, 1350)}
 SUB_Y = {"9x16": 0.68, "16x9": 0.84, "1x1": 0.80, "4x5": 0.78}  # ตำแหน่งกึ่งกลางซับเทียบความสูง
+SUB_Y_TOON = {"9x16": 0.80, "16x9": 0.86}  # การ์ตูนเล่าเรื่อง: ซับต่ำลง ไม่บังหน้าตัวละคร
 KEYMAP = {"ป้าย": "badge", "ปี": "badge", "หัวข้อ": "title", "ภาพ": "layout", "เลย์เอาต์": "layout",
           "เครดิต": "credit", "สี": "color", "โทน": "tone", "กล้อง": "camera", "เปลี่ยน": "transition",
-          "ทรานซิชัน": "transition", "ซ้ำ": "repeat"}
+          "ทรานซิชัน": "transition", "ซ้ำ": "repeat", "ตัวละคร": "cast", "ช็อต": "shot", "ท่าทาง": "action",
+          "แอ็กชัน": "action", "เคลื่อนไหว": "motion"}
 COLLAGE = ["#1f2a5c", "#f2b21b", "#6cb4e4", "#b3123a", "#1aa391", "#2b4fd6", "#e94b6a"]
 COLOR_TH = {"น้ำเงิน": "#1f2a5c", "กรมท่า": "#1f2a5c", "เหลือง": "#f2b21b", "ฟ้า": "#6cb4e4", "แดง": "#b3123a",
             "เขียว": "#1aa391", "น้ำเงินสด": "#2b4fd6", "ชมพู": "#e94b6a", "ดำ": "#16141c"}
@@ -385,7 +387,7 @@ def _esc(s):
 def caption_mode(style, mode):
     if mode in ("word", "phrase"):
         return mode
-    return "word" if style in ("collage", "kinetic", "cinematic") else "phrase"
+    return "word" if style in ("collage", "kinetic", "cinematic") else "phrase"  # toon3d = ทีละวลีตัวใหญ่แบบการ์ตูนเล่าเรื่อง
 
 
 def to_ass(chunks, fmt="9x16", font="Kanit", scenes=None, style="pastel3d", mode="auto", framed=None,
@@ -395,15 +397,15 @@ def to_ass(chunks, fmt="9x16", font="Kanit", scenes=None, style="pastel3d", mode
     collage = style == "collage"
     framed = collage if framed is None else framed
     mode = caption_mode(style, mode)
-    hi = HI_YELLOW if collage else HI_GOLD if style == "cinematic" else HI_LIME
+    hi = HI_YELLOW if collage or style == "toon3d" else HI_GOLD if style == "cinematic" else HI_LIME
     if collage:
         cx0, cy0, cw, ch = card_rect(w, h, framed)
         L = collage_layout(cw, ch)
         cap_x, cap_y = cx0 + cw / 2, cy0 + L["cap"][0]
         cap_size, cap_w = L["cap"][1], L["cap"][2]
     else:
-        cap_x, cap_y = w / 2, h * SUB_Y[fmt]
-        cap_size = min(w, h) * (0.085 if fmt == "9x16" else 0.075) * (1.12 if style == "kinetic" else 1)
+        cap_x, cap_y = w / 2, h * (SUB_Y_TOON.get(fmt, SUB_Y[fmt]) if style == "toon3d" else SUB_Y[fmt])
+        cap_size = min(w, h) * (0.085 if fmt == "9x16" else 0.075) * (1.12 if style in ("kinetic", "toon3d") else 1)
         cap_w = w * 0.84
     K = font_scale(font)  # ขนาดใน ASS = ขนาด em × K
     size = round(cap_size)
