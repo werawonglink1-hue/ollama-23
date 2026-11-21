@@ -21,7 +21,10 @@ python3 .claude/skills/social-video-studio/scripts/render.py .claude/skills/soci
 ติดตั้งเครื่องมือครั้งเดียว (PowerShell): Git, Python 3 + Pillow, ffmpeg (มี libass สำหรับซับ), Node.js (ไม่บังคับ ใช้ตัดคำไทยให้ซับคำต่อคำแม่นขึ้น)
 
 ```powershell
-winget install Git.Git Python.Python.3.12 Gyan.FFmpeg OpenJS.NodeJS.LTS
+winget install Git.Git
+winget install Python.Python.3.12
+winget install Gyan.FFmpeg
+winget install OpenJS.NodeJS.LTS
 py -m pip install pillow
 ```
 
