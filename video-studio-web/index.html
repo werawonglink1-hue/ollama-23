@@ -790,6 +790,12 @@ function drawWindowContent(clip, g, L, j, u, col, meta){
     g.save(); g.translate(cx,cy); g.scale(zz,zz); g.translate(-cx,-cy);
     g.fillStyle=acc; g.beginPath(); g.arc(cx,cy,R,0,7); g.fill();
     g.save(); g.beginPath(); g.arc(cx,cy,R,0,7); g.clip(); g.fillStyle=halftone(g, Math.max(6,Math.round(R/9)), Math.max(1.5,R/9*0.25), "rgba(255,255,255,0.35)"); g.fillRect(cx-R,cy-R,R*2,R*2); g.restore();
+    if (m && m.dataset && m.dataset.cutout === "1"){ // PNG พื้นหลังโปร่งใส → สติกเกอร์คนขอบขาว โผล่พ้นวงกลม (แบบคลิปตัวอย่าง)
+      const st = stickerCanvas(m), hh = Math.min(R*1.85, bh*0.9), ww = Math.min(st.width*hh/st.height, bw*0.98), h2 = st.height*ww/st.width;
+      g.shadowColor="rgba(0,0,0,0.35)"; g.shadowBlur=R*0.08; g.shadowOffsetY=R*0.03;
+      g.drawImage(st, cx-ww/2, Math.min(by+bh, cy+R*1.02)-h2, ww, h2); g.shadowBlur=0; g.shadowOffsetY=0;
+      g.restore(); return;
+    }
     const r2=R*0.8, ccy=cy-R*0.06;
     g.shadowColor="rgba(0,0,0,0.35)"; g.shadowBlur=R*0.1; g.fillStyle="#fff"; g.beginPath(); g.arc(cx,ccy,r2,0,7); g.fill(); g.shadowBlur=0;
     g.save(); g.beginPath(); g.arc(cx,ccy,r2*0.93,0,7); g.clip();
@@ -814,6 +820,15 @@ function drawWindowContent(clip, g, L, j, u, col, meta){
     g.fillStyle=mix(col,"#000000",0.45); g.fillRect(bx, base, bw, bh);
   }
   g.fillStyle=fine; g.fillRect(bx,by,bw,bh);
+}
+function stickerCanvas(img){ // ขอบขาวรอบรูปที่ตัดพื้นหลังแล้ว (คำนวณครั้งเดียวต่อรูป)
+  if (img._sticker) return img._sticker;
+  const w=img.naturalWidth||img.width, h=img.naturalHeight||img.height, s=Math.max(4, Math.round(Math.min(w,h)*0.03));
+  const c=document.createElement("canvas"); c.width=w+s*4; c.height=h+s*4; const x=c.getContext("2d");
+  for (let a=0;a<16;a++){ const ang=a/16*Math.PI*2; x.drawImage(img, s*2+Math.cos(ang)*s, s*2+Math.sin(ang)*s); }
+  x.globalCompositeOperation="source-in"; x.fillStyle="#ffffff"; x.fillRect(0,0,c.width,c.height);
+  x.globalCompositeOperation="source-over"; x.drawImage(img, s*2, s*2);
+  return (img._sticker = c);
 }
 function drawCard(clip, g, cw, ch, j, t, opt){
   const s=clip.tl.scenes[j], meta=s.meta||{}, col=sceneColor(clip,j), L=collageLayout(cw,ch), seed=clip.i*131+j*17+3;
@@ -933,7 +948,11 @@ class Clip {
     for (const f of files){ while (j<this.tl.scenes.length && this.media[j]) j++; if (j>=this.tl.scenes.length) j = 0;
       const url = URL.createObjectURL(f); let el;
       if (f.type.startsWith("video")){ el=document.createElement("video"); el.src=url; el.muted=true; el.loop=true; el.playsInline=true; await new Promise(r=>{ el.onloadeddata=r; el.onerror=r; }); el.play().catch(()=>{}); }
-      else { el=new Image(); el.src=url; await el.decode().catch(()=>{}); }
+      else { el=new Image(); el.src=url; await el.decode().catch(()=>{});
+        if (/png|webp/i.test(f.type) && el.naturalWidth){ // มีพื้นหลังโปร่งใสไหม → ใช้เป็นสติกเกอร์
+          try { const c=document.createElement("canvas"); c.width=c.height=48; const x=c.getContext("2d"); x.drawImage(el,0,0,48,48);
+            const d=x.getImageData(0,0,48,48).data; let n=0; for (let i=3;i<d.length;i+=4) if (d[i]<200) n++;
+            if (n > 48*48*0.05) el.dataset.cutout = "1"; } catch {} } }
       el.dataset.name = f.name; this.media[j++] = el; }
     this.refresh(); }
   /* ---- เล่น ---- */

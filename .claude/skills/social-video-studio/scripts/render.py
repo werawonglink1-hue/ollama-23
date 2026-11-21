@@ -8,7 +8,9 @@
   สติกเกอร์วงกลม แถบซับกระดาษฉีก ซับคำต่อคำ และทรานซิชันสไลด์ระหว่างฉาก
 - สไตล์อื่น: พื้นหลังสังเคราะห์ตาม visualStyle + Ken Burns
 - ภาพ: scenes[j].media (รูป/วิดีโอ) ไม่มีก็สร้างภาพแทนที่ให้
-- เสียง: clips[i].voice (ไฟล์พากย์ เริ่มที่วินาที 0) + project.musicFile หรือเพลงสังเคราะห์ตาม project.music
+- เสียง: clips[i].voice (ไฟล์พากย์ เริ่มที่วินาที 0; ทำจังหวะ/timings ด้วย voice_align.py) + project.musicFile
+  หรือเพลงสังเคราะห์ตาม project.music + เสียงประกอบตาม {เสียง: ...} และตอนเปลี่ยนฉาก (project.sfxFiles หรือสังเคราะห์)
+- ภาพคนแบบ PNG พื้นหลังโปร่งใสในฉาก "ภาพ: วงกลม" จะกลายเป็นสติกเกอร์ขอบขาวแบบคลิปตัวอย่าง
 - ซับ: จาก script + clips[i].timings (ถ้ามี จากโหมดแตะเพื่อซิงก์) ไม่งั้นประมาณจากความเร็วอ่าน
 """
 from __future__ import annotations
@@ -178,6 +180,41 @@ def _load_image(path, tmpdir):
         return None
 
 
+def _load_cutout(path):
+    """PNG/WebP ที่มีพื้นหลังโปร่งใส (เช่น จาก remove_background ของ Higgsfield) → ใช้ทำสติกเกอร์คนขอบขาว"""
+    from PIL import Image
+    if not path or not os.path.exists(path) or not path.lower().endswith((".png", ".webp")):
+        return None
+    try:
+        im = Image.open(path).convert("RGBA")
+    except OSError:
+        return None
+    lo, hi = im.getchannel("A").getextrema()
+    return im.crop(im.getchannel("A").getbbox()) if lo < 200 and hi > 0 else None
+
+
+def _sticker(cut, height, stroke):
+    """ย่อภาพตัดพื้นหลังให้สูง height แล้วใส่ขอบขาว + เงา แบบสติกเกอร์ในคลิปตัวอย่าง"""
+    from PIL import Image, ImageFilter
+    sc = height / cut.height
+    cut = cut.resize((max(2, int(cut.width * sc)), max(2, int(cut.height * sc))), Image.LANCZOS)
+    pad = stroke * 2
+    a = Image.new("L", (cut.width + pad * 2, cut.height + pad * 2), 0)
+    a.paste(cut.getchannel("A"), (pad, pad))
+    small = a.resize((max(1, a.width // 2), max(1, a.height // 2)))
+    k = max(3, stroke | 1)
+    grown = small.filter(ImageFilter.MaxFilter(k)).resize(a.size).point(lambda v: 255 if v > 90 else 0)
+    out = Image.new("RGBA", a.size, (0, 0, 0, 0))
+    shadow = Image.new("RGBA", a.size, (0, 0, 0, 0))
+    shadow.putalpha(grown.filter(ImageFilter.GaussianBlur(stroke)).point(lambda v: int(v * 0.35)))
+    out.alpha_composite(shadow, (stroke // 2, stroke))
+    white = Image.new("RGBA", a.size, (255, 255, 255, 0))
+    white.putalpha(grown)
+    out.alpha_composite(white)
+    out.alpha_composite(cut, (pad, pad))
+    return out
+
+
 def is_circle(scene, j):
     layout = (scene.meta or {}).get("layout", "")
     if any(k in layout for k in ("วงกลม", "สติกเกอร์", "circle")):
@@ -211,23 +248,30 @@ def collage_overlay(path, w, h, scene, j, clip_index, framed, media_path, hole, 
         acc = "#f6c624" if col in ("#b3123a", "#e94b6a") else "#e8304a"
         cd.ellipse([ccx - R, ccy - R, ccx + R, ccy + R], fill=hex2rgb(acc) + (255,))
         _halftone(cd, (ccx - R * 0.72, ccy - R * 0.72, ccx + R * 0.72, ccy + R * 0.72), max(6, R / 9), max(1.5, R / 9 * 0.25), (255, 255, 255, 90))
-        r2, cyy = R * 0.8, ccy - R * 0.06
-        cd.ellipse([ccx - r2 - 4, cyy - r2 + 6, ccx + r2 + 4, cyy + r2 + 14], fill=(0, 0, 0, 70))
-        cd.ellipse([ccx - r2, cyy - r2, ccx + r2, cyy + r2], fill=(255, 255, 255, 255))
-        ri = r2 * 0.93
-        size = (max(2, int(ri * 2)), max(2, int(ri * 2)))
-        pic = _load_image(media_path, tmpdir)
-        if pic is not None:
-            pic = ImageOps.fit(pic, size)
-        else:  # ภาพแทนที่: เงาคน
-            pic = Image.new("RGB", size, mix(col, "#ffffff", 0.55))
-            pd = ImageDraw.Draw(pic)
-            s0, dark = size[0], mix(col, "#000000", 0.35)
-            pd.ellipse([s0 * 0.34, s0 * 0.24, s0 * 0.66, s0 * 0.56], fill=dark)
-            pd.ellipse([s0 * 0.19, s0 * 0.61, s0 * 0.81, s0 * 1.11], fill=dark)
-        m2 = Image.new("L", size, 0)
-        ImageDraw.Draw(m2).ellipse([0, 0, size[0] - 1, size[1] - 1], fill=255)
-        content.paste(pic, (int(ccx - ri), int(cyy - ri)), m2)
+        cut = _load_cutout(media_path)
+        if cut is not None:  # คนตัดพื้นหลัง (PNG โปร่งใส) เป็นสติกเกอร์ขอบขาว โผล่พ้นวงกลมด้านล่างแบบคลิปตัวอย่าง
+            st = _sticker(cut, min(R * 1.85, bh * 0.9), max(6, int(R * 0.06)))
+            if st.width > bw * 0.98:
+                st = st.resize((int(bw * 0.98), int(st.height * bw * 0.98 / st.width)))
+            content.alpha_composite(st, (int(ccx - st.width / 2), int(min(by + bh, ccy + R * 1.02) - st.height)))
+        else:  # รูปทั่วไป: ครอปเป็นวงกลมขอบขาว
+            r2, cyy = R * 0.8, ccy - R * 0.06
+            cd.ellipse([ccx - r2 - 4, cyy - r2 + 6, ccx + r2 + 4, cyy + r2 + 14], fill=(0, 0, 0, 70))
+            cd.ellipse([ccx - r2, cyy - r2, ccx + r2, cyy + r2], fill=(255, 255, 255, 255))
+            ri = r2 * 0.93
+            size = (max(2, int(ri * 2)), max(2, int(ri * 2)))
+            pic = _load_image(media_path, tmpdir)
+            if pic is not None:
+                pic = ImageOps.fit(pic, size)
+            else:  # ภาพแทนที่: เงาคน
+                pic = Image.new("RGB", size, mix(col, "#ffffff", 0.55))
+                pd = ImageDraw.Draw(pic)
+                s0, dark = size[0], mix(col, "#000000", 0.35)
+                pd.ellipse([s0 * 0.34, s0 * 0.24, s0 * 0.66, s0 * 0.56], fill=dark)
+                pd.ellipse([s0 * 0.19, s0 * 0.61, s0 * 0.81, s0 * 1.11], fill=dark)
+            m2 = Image.new("L", size, 0)
+            ImageDraw.Draw(m2).ellipse([0, 0, size[0] - 1, size[1] - 1], fill=255)
+            content.paste(pic, (int(ccx - ri), int(cyy - ri)), m2)
     elif not hole:  # ภาพแทนที่: ฟ้าโทนสีฉาก + วงกลมฮาล์ฟโทน + เมือง
         top, bot = mix(col, "#ffffff", 0.55), mix(col, "#ffffff", 0.2)
         for yy in range(int(by), int(by + bh) + 1):
@@ -397,6 +441,83 @@ def synth_music(path, seconds, kind="musicbox", sr=22050):
         wv.writeframes(bytes(out))
 
 
+# ---------- เสียงประกอบ (SFX) ----------
+def sfx_kind(text):
+    if "ลม" in text:
+        return "wind"
+    if "ฝน" in text:
+        return "rain"
+    if any(k in text for k in ("วูบ", "ปลิว", "หวือ")):
+        return "whoosh"
+    return "chime"
+
+
+def synth_sfx(kind, sr=22050):
+    """เสียงประกอบสังเคราะห์ (ตรงกับในเว็บ) ใช้เมื่อไม่มีไฟล์จาก Higgsfield / AudioGen / คลังเสียงของผู้ใช้"""
+    rnd = random.Random(7)
+    out = []
+    if kind == "chime":
+        n = int(1.8 * sr)
+        out = [0.0] * n
+        for j, f in enumerate((1568, 2093, 2637)):
+            st = int(j * 0.09 * sr)
+            for i in range(st, n):
+                t = (i - st) / sr
+                out[i] += 0.22 * math.exp(-t * 3.2) * math.sin(2 * math.pi * f * t)
+    elif kind == "pop":
+        n = int(0.12 * sr)
+        ph = 0.0
+        for i in range(n):
+            t = i / sr
+            ph += 2 * math.pi * (300 + 600 * math.exp(-t * 30)) / sr
+            out.append(0.5 * math.exp(-t * 40) * math.sin(ph))
+    else:  # whoosh / paper / wind / rain = noise ผ่านตัวกรองอย่างง่าย
+        dur = {"paper": 0.35, "whoosh": 0.7}.get(kind, 3.0)
+        n = int(dur * sr)
+        lp = hp = 0.0
+        for i in range(n):
+            t = i / n
+            x = rnd.uniform(-1, 1)
+            a = {"paper": 0.6 + 0.35 * t, "whoosh": 0.05 + 0.5 * t, "wind": 0.04, "rain": 0.9}[kind]
+            lp += a * (x - lp)
+            hp = lp - hp * 0.0 if kind != "rain" else x - lp
+            env = min(1.0, t / 0.35) * min(1.0, (1 - t) / 0.65) if kind in ("paper", "whoosh") else min(1.0, t / 0.2) * min(1.0, (1 - t) / 0.3)
+            if kind == "wind":
+                env *= 0.6 + 0.4 * math.sin(2 * math.pi * 0.7 * i / sr)
+            if kind == "rain" and rnd.random() < 0.004:
+                hp += rnd.uniform(-1, 1) * 2
+            out.append({"paper": 0.7, "whoosh": 0.6, "wind": 0.9, "rain": 0.35}[kind] * env * (hp if kind == "rain" else lp))
+    return out
+
+
+def _decode_mono(path, sr):
+    r = subprocess.run(["ffmpeg", "-v", "error", "-i", path, "-ac", "1", "-ar", str(sr), "-f", "s16le", "-"], capture_output=True)
+    if r.returncode:
+        return None
+    vals = struct.unpack("<%dh" % (len(r.stdout) // 2), r.stdout[:len(r.stdout) // 2 * 2])
+    return [v / 32768.0 for v in vals]
+
+
+def build_sfx_track(path, total, cues, files=None, sr=22050):
+    """รวมเสียงประกอบทุกจุด (เวลา, ชนิด) เป็นไฟล์เดียว: ใช้ไฟล์จริงจาก files[ชนิด] ถ้ามี ไม่งั้นสังเคราะห์"""
+    buf = [0.0] * int((total + 3) * sr)
+    cache = {}
+    for t, kind in cues:
+        if kind not in cache:
+            src = (files or {}).get(kind)
+            cache[kind] = (_decode_mono(src, sr) if src and os.path.exists(src) else None) or synth_sfx(kind, sr)
+        snd, st = cache[kind], int(max(0.0, t) * sr)
+        for i, v in enumerate(snd):
+            if st + i >= len(buf):
+                break
+            buf[st + i] += v
+    with wave.open(path, "wb") as wv:
+        wv.setnchannels(1)
+        wv.setsampwidth(2)
+        wv.setframerate(sr)
+        wv.writeframes(b"".join(struct.pack("<h", int(max(-1.0, min(1.0, v)) * 32000)) for v in buf))
+
+
 # ---------- ประกอบคลิป ----------
 def slug(s):
     s = re.sub(r"[^\w฀-๿]+", "-", s).strip("-")
@@ -480,6 +601,14 @@ def render_clip(project, ci, clip, fmt, outdir, fps, font):
             vol = 0.18 if voice else 0.55  # เพลงต่ำกว่าเสียงพูด ~-15 dB เมื่อมีพากย์
             tracks.append((f"[{n}:a]aresample=44100,volume={vol},afade=t=out:st={max(0, total - 2):.2f}:d=2", "[m]"))
             n += 1
+        cues = [(c.start, sfx_kind(x)) for c in chunks for x in c.sfx]
+        cues += [(s.start, "paper" if collage else "whoosh") for s in scenes[1:]]
+        if cues and project.get("sfx", True):
+            sfx_path = os.path.join(tmp, "sfx.wav")
+            build_sfx_track(sfx_path, total, cues, project.get("sfxFiles"))
+            inputs += ["-i", sfx_path]
+            tracks.append((f"[{n}:a]aresample=44100,volume={0.55 if voice else 0.8}", "[x]"))
+            n += 1
         sub = f"ass='{ff_filter_path(ass_path)}'" + (f":fontsdir='{ff_filter_path(bs.FONTS_DIR)}'" if os.path.isdir(bs.FONTS_DIR) else "")
         fc = f"[0:v]{sub}[vo]"
         if tracks:
@@ -519,6 +648,9 @@ def main(argv=None):
                 s["media"] = os.path.join(pdir, s["media"])
     if project.get("musicFile") and not os.path.isabs(project["musicFile"]):
         project["musicFile"] = os.path.join(pdir, project["musicFile"])
+    for kind, path in list((project.get("sfxFiles") or {}).items()):  # {"chime": "sfx/chime.wav", ...}
+        if path and not os.path.isabs(path):
+            project["sfxFiles"][kind] = os.path.join(pdir, path)
     formats = (a.formats or ",".join(project.get("formats", ["9x16"]))).split(",")
     pick = {int(x) - 1 for x in a.clips.split(",")} if a.clips else None
     os.makedirs(a.out, exist_ok=True)
