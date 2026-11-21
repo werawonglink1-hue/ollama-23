@@ -178,6 +178,10 @@ def to_md(res):
         link = f"[ลิงก์]({t['links'][0]})" if t["links"] else ""
         lines.append(f"| {i} | {t['topic'].replace('|', '/')} | {t['score']} | {','.join(t['kinds'])} | {vol} | "
                      f"{t['ageHours']} | {'; '.join(t['sources'])[:60]} | {link} |")
+    if res.get("onThisDay"):
+        lines += ["", "## วันนี้ในอดีต (สำหรับแนวประวัติศาสตร์/บุคคล)", ""]
+        lines += [f"- {e['year']}: {e['event']}" + (f" ([ลิงก์]({e['links'][0]}))" if e.get("links") and e["links"][0] else "")
+                  for e in res["onThisDay"]]
     lines += ["", "คะแนนเป็นจุดตั้งต้นเท่านั้น ต้องตรวจข้อเท็จจริงและความเหมาะสมกับแนวคลิปก่อนเลือก"]
     return "\n".join(lines) + "\n"
 
@@ -201,7 +205,9 @@ def cmd_fetch(a):
         except Exception as e:  # noqa: BLE001 - แหล่งหนึ่งล้ม ไม่ให้ทั้งงานล้ม แต่ต้องรายงาน
             errors.append(f"{s}: {e}")
     res = {"date": dt.date.today().isoformat(), "geo": a.geo, "sourcesOk": ok, "errors": errors,
-           "topics": merge(items)[: a.limit]}
+           "topics": merge(items)[: a.limit],
+           "onThisDay": [{"year": x.get("year"), "event": x["title"], "source": x["source"], "links": x.get("links", [])}
+                         for x in items if x["kind"] == "onthisday"]}  # แยกไว้ครบ (แนวประวัติศาสตร์/บุคคลใช้เป็นจุดเกาะ)
     text = json.dumps(res, ensure_ascii=False, indent=1)
     if a.out:
         os.makedirs(os.path.dirname(os.path.abspath(a.out)) or ".", exist_ok=True)
