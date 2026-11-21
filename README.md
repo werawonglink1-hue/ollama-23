@@ -1,10 +1,16 @@
-# Social Video Studio: สตูดิโอคลิปเล่าเรื่องภาษาไทย
+# Social Video Studio: ฝ่ายผลิตคลิปเล่าเรื่องภาษาไทยด้วย AI
+
+**คุณสั่งแค่แนวคลิป + จำนวน** เช่น `ผลิตคลิปประวัติศาสตร์ 3 คลิป` ในแชต Claude Code ทีม agent หากระแสประจำวัน เขียนบท ทำภาพ พากย์เสียงตามบทบาท
+ตัดต่อ ตรวจคุณภาพ แล้วส่งเข้าห้องอนุมัติ คุณอนุมัติแล้วระบบจัดเก็บลง `D:\VIDEO_WORKFLOW` พร้อมทะเบียนและรายงาน
 
 | ส่วน | ที่อยู่ |
 |---|---|
-| เว็บตัดต่อ (เปิด `index.html` ใน Chrome/Edge) | [`video-studio-web/`](video-studio-web/README.md) |
-| Skill สำหรับ Claude Code | [`.claude/skills/social-video-studio/`](.claude/skills/social-video-studio/SKILL.md) |
-| ทีม AI Agent 20 ตำแหน่ง (ทำคลิป · โซเชียล · ภาพ/แบรนด์ · ข้อเสนอ/แอด · ทำเว็บ) | [`.claude/agents/`](.claude/agents/) · ผังทีม [`team.md`](.claude/skills/social-video-studio/references/team.md) |
+| เว็บสำนักงาน (`index.html`: แผนก ห้องอนุมัติ ทะเบียน รายงาน) + ห้องตัดต่อ (`editor.html`) | [`video-studio-web/`](video-studio-web/README.md) |
+| ฝ่ายผลิตอัตโนมัติ (สั่งแค่แนว + จำนวน) | [`.claude/skills/content-production/`](.claude/skills/content-production/SKILL.md) · กฎบัตร [`charter.md`](.claude/skills/content-production/references/charter.md) |
+| ควบคุมเอกสาร/อนุมัติ/จัดเก็บ (D:\VIDEO_WORKFLOW) | [`.claude/skills/video-document-control/`](.claude/skills/video-document-control/SKILL.md) |
+| เครื่องมือผลิตคลิป (สคริปต์ ซับ เรนเดอร์) | [`.claude/skills/social-video-studio/`](.claude/skills/social-video-studio/SKILL.md) |
+| ทีม AI Agent 25 ตำแหน่ง (วิจัยกระแส · ครีเอทีฟ · ภาพ · เสียง · ตัดต่อ · QC · ควบคุมเอกสาร + โซเชียล · แอด · ทำเว็บ) | [`.claude/agents/`](.claude/agents/) |
+| ค่าระบบ (โฟลเดอร์ D: งบเครดิต เกณฑ์ QC แนวคลิป) | [`production.config.json`](production.config.json) |
 
 กรอกข้อมูลครั้งเดียวได้ 1–5 คลิป ค่าเริ่มต้นเป็นแบบ "สารคดีคอลลาจ" ตามคลิปตัวอย่างพื้นฐาน
 (ป้ายปี หัวข้อ ขอบกระดาษฉีก ซับเด้งคำต่อคำ) และเลือกสไตล์อื่นได้จากดรอปดาวน์ เช่น เล่าเรื่องละมุน ครูหน่อง มานะ
@@ -50,7 +56,10 @@ git clone -b claude/beautiful-goldberg-a1jt5q https://github.com/werawonglink1-h
 ```
 
 - เปิด Claude Code (แอป Claude บนเดสก์ท็อป) ในโฟลเดอร์ `D:\agent-office-workspace\video-studio\social-video-studio` แล้ว skill และทีม agent 20 ตำแหน่งจะโหลดอัตโนมัติ
-- เว็บ: ดับเบิลคลิก `video-studio-web\index.html` (Chrome/Edge)
+- ตั้งระบบจัดเก็บครั้งแรก: `py .claude\skills\video-document-control\scripts\doc_control.py init` (สร้าง `D:\VIDEO_WORKFLOW\01_INCOMING` … `06_DOCUMENTATION`)
+- สั่งงาน: พิมพ์ในแชต Claude Code เช่น `ผลิตคลิปประวัติศาสตร์ 3 คลิป` (ทีมทำต่อเองจนส่งเข้าห้องอนุมัติ)
+- เว็บสำนักงาน: ดับเบิลคลิก `video-studio-web\index.html` (Chrome/Edge) → เชื่อมโฟลเดอร์ `D:\VIDEO_WORKFLOW` → ห้องอนุมัติ
+- ห้องตัดต่อ: `video-studio-web\editor.html` (ให้ Agent คิดเรื่องให้ หรือกรอกเอง)
 - เรนเดอร์: `py .claude\skills\social-video-studio\scripts\render.py <project.json> --out out` (รองรับ path แบบ `D:\...` และชื่อไฟล์ภาษาไทยแล้ว)
 
 เครื่องมือเสริม (ติดตั้งเฉพาะที่ใช้):

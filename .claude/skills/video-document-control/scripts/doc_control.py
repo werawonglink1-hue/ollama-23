@@ -48,7 +48,7 @@ AI_NAMES = re.compile(r"\b(claude|chatgpt|gpt|gemini|assistant|chatbot|bot|agent
 AI_WORD = re.compile(r"\bAI\b")  # ตัวพิมพ์ใหญ่เท่านั้น (ไม่บล็อกชื่อคนอย่าง "Ai")
 ACTOR = "AI Document Controller"
 REQ_DEFAULT = {"minDuration": 3, "maxDuration": 900, "minShortSide": 720, "requireAudio": True,
-               "requireCoordinator": False, "requireSubtitle": False, "deepCheck": True}
+               "requireCoordinator": False, "requireSubtitle": False, "requireQcPass": False, "deepCheck": True}
 
 
 class DCError(Exception):
@@ -348,6 +348,14 @@ def check_complete(rec, verrec, req):
         warnings.append(f"fps {p['fps']} อยู่นอกช่วงที่แพลตฟอร์มรับ (23–60)")
     if req.get("requireSubtitle") and not verrec.get("subtitleFile"):
         problems.append("ไม่มีไฟล์ซับ .srt")
+    qc = verrec.get("qc")
+    if req.get("requireQcPass"):
+        if not qc:
+            problems.append("ยังไม่มีผลตรวจคุณภาพ (.qc.json จาก qc_check.py) หรือผลเก่ากว่าไฟล์")
+        elif not qc.get("pass"):
+            problems.append(f"ไม่ผ่าน QC ({qc.get('fails')} ข้อ) ส่งกลับ: {', '.join(qc.get('returnTo') or [])}")
+    elif qc and not qc.get("pass"):
+        warnings.append(f"ผล QC ไม่ผ่าน {qc.get('fails')} ข้อ")
     return problems, warnings
 
 
@@ -408,6 +416,16 @@ def add_version(root, reg, rec, src, submitted_by, changes=""):
         if not os.path.exists(dst):
             shutil.copy2(s, dst)
         verrec["subtitleFile"] = rel(root, dst)
+    qcf = os.path.splitext(src)[0] + ".qc.json"
+    if os.path.exists(qcf) and os.path.getmtime(qcf) >= os.path.getmtime(src):  # ผล QC ต้องใหม่กว่าไฟล์ที่ตรวจ
+        try:
+            with open(qcf, encoding="utf-8") as fh:
+                q = json.load(fh)
+            verrec["qc"] = {"pass": bool(q.get("pass")), "fails": q.get("fails", 0), "warnings": q.get("warnings", 0),
+                            "returnTo": q.get("returnTo", []), "at": q.get("at", ""),
+                            "issues": [c["message"] for c in q.get("checks", []) if not c.get("ok")][:12]}
+        except (OSError, ValueError, KeyError):
+            pass
     rec["versions"].append(verrec)
     rec["currentVersion"] = ver
     set_status(rec, verrec, "RECEIVED")

@@ -16,7 +16,7 @@ color: green
 - `ffprobe` ทุกไฟล์ใน `work/<slug>/out/`: ขนาด ความยาว มีเสียง
 - ดึงเฟรม 4 จุดต่อไฟล์แล้ว **เปิดดูจริง** (Read ไฟล์ภาพ) เทียบ `references/baseline.md`
 - ซับครบ: จำนวนท่อนใน `.srt` ต้องเท่ากับที่ `build_subs.py` นับได้จากสคริปต์
-- เว็บ: เปิด `video-studio-web/index.html` ด้วย Playwright สร้างคลิป ต้องไม่มี pageerror/console error
+- เว็บ: เปิด `video-studio-web/editor.html` ด้วย Playwright สร้างคลิป (และ `index.html` หน้าสำนักงาน) ต้องไม่มี pageerror/console error
 
 ## C) ตรวจคำกล่าวอ้างของ agent อื่น
 คำว่า "ทดสอบแล้ว", "ผ่าน", "เสร็จ" ต้องมีหลักฐาน (คำสั่งที่รัน + ผลลัพธ์ หรือภาพ) ไม่มีก็ถือว่ายังไม่ผ่าน

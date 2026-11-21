@@ -1,0 +1,1317 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>สตูดิโอคลิปเล่าเรื่อง</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;800&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* เลย์เอาต์: ฟอร์มกรอกครั้งเดียวทางซ้าย การ์ดคลิปทางขวา · โทนหมึกกรมท่า เหลือง และป้ายกระดาษแบบสารคดีคอลลาจ */
+:root{
+  --bg:#eef0f5; --panel:#ffffff; --ink:#1b2140; --muted:#59617f; --line:#d9deea; --input-bg:#f7f8fb;
+  --accent:#f2b21b; --accent-ink:#1b2140; --accent-soft:#fff1c7; --focus:#1f2a5c; --warn:#a8460c;
+  --tag-bg:#e6eaf6; --tag-ink:#1f2a5c; --label-bg:#ffffff; --label-ink:#121212; --label-shadow:#121212;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1220; --panel:#171c2e; --ink:#eef1f8; --muted:#a1a9c4; --line:#2a3150; --input-bg:#11152a;
+    --accent:#f2b21b; --accent-ink:#16141c; --accent-soft:#3a3013; --focus:#f2b21b; --warn:#f0a35e;
+    --tag-bg:#232a45; --tag-ink:#cfd8ff; --label-bg:#ffffff; --label-ink:#121212; --label-shadow:#f2b21b;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1220; --panel:#171c2e; --ink:#eef1f8; --muted:#a1a9c4; --line:#2a3150; --input-bg:#11152a;
+  --accent:#f2b21b; --accent-ink:#16141c; --accent-soft:#3a3013; --focus:#f2b21b; --warn:#f0a35e;
+  --tag-bg:#232a45; --tag-ink:#cfd8ff; --label-bg:#ffffff; --label-ink:#121212; --label-shadow:#f2b21b;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Sarabun",system-ui,sans-serif}
+h1,h2,h3,button,label,select,.tag,summary{font-family:"Kanit",system-ui,sans-serif}
+header{padding-block:20px 8px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));max-width:1400px;margin:auto}
+header h1{margin:0;font-size:26px;font-weight:800;text-wrap:balance}
+.h-label{display:inline-block;background:var(--label-bg);color:var(--label-ink);padding:0 .35em;margin-right:.25em;box-shadow:.12em .12em 0 var(--label-shadow);transform:rotate(-1.5deg)}
+header p{margin:4px 0 0;color:var(--muted)}
+.backlink{font-size:13.5px;margin:0 0 6px!important}
+.backlink a{color:var(--ink);font-weight:600}
+main{display:grid;grid-template-columns:minmax(300px,390px) 1fr;gap:18px;max-width:1400px;margin:auto;padding-block:12px 40px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+@media (max-width:900px){main{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.form{position:sticky;top:12px;align-self:start;max-height:calc(100vh - 24px);overflow:auto}
+@media (max-width:900px){.form{position:static;max-height:none}}
+label{display:block;font-size:13.5px;font-weight:600;margin:12px 0 4px}
+label small{font-weight:400;color:var(--muted);font-family:"Sarabun"}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--input-bg);color:var(--ink);font:inherit}
+textarea{resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:9px;padding:8px 12px;font-size:14px;font-weight:600}
+button:hover{border-color:var(--focus)}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+button:disabled{opacity:.5;cursor:not-allowed}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);width:100%;padding:12px;font-size:16px;margin-top:16px}
+.hint{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+#clips{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,540px),1fr));gap:18px;align-content:start}
+.empty{color:var(--muted);text-align:center;padding:60px 20px;border:2px dashed var(--line);border-radius:14px}
+.clip h2{font-size:18px;margin:0 0 2px}
+.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--tag-bg);color:var(--tag-ink);margin:0 4px 4px 0}
+.stage{display:grid;grid-template-columns:auto 1fr;gap:14px;margin-top:10px}
+.stage.horiz{grid-template-columns:1fr}
+@media (max-width:640px){.stage{grid-template-columns:1fr}}
+.cv-wrap{background:#000;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+canvas{display:block;max-width:100%;height:auto}
+.cv-wrap.v canvas{width:270px}
+.cv-wrap.h canvas{width:100%}
+.tools{display:flex;flex-wrap:wrap;gap:6px;align-content:start}
+.tools button{font-size:13px;padding:7px 10px}
+.meta{font-size:12.5px;color:var(--muted);margin-top:6px}
+.warn{color:var(--warn)}
+details{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+summary{cursor:pointer;font-weight:600;font-size:14px}
+.script{font-family:"Sarabun",monospace;font-size:14px;min-height:240px}
+.scene{border:1px solid var(--line);border-radius:9px;padding:8px 10px;margin:6px 0;font-size:13.5px}
+.scene b{font-family:"Kanit"}
+.scene code{display:block;white-space:pre-wrap;font-size:12px;color:var(--muted);margin-top:4px}
+.progress{height:4px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:6px}
+.progress i{display:block;height:100%;width:0;background:var(--accent)}
+.legend{font-size:12.5px;color:var(--muted);line-height:1.8}
+.legend kbd{font-family:inherit;background:var(--accent-soft);padding:0 5px;border-radius:4px;color:var(--ink)}
+.sync{position:fixed;inset:auto 0 0 0;background:var(--panel);border-top:2px solid var(--accent);padding-top:14px;padding-bottom:calc(14px + env(safe-area-inset-bottom, 0px));padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:none;z-index:9}
+.sync.on{display:block}
+.sync .now{font:800 28px "Kanit";margin:4px 0}
+.sync .next{color:var(--muted)}
+.sync .bar{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.sync .bar button.big{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);padding:12px 22px;font-size:16px}
+.bulk{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.status{font-size:13px;color:var(--muted);min-height:1.4em;flex:1;min-width:0}
+.status-row{display:flex;gap:8px;align-items:center;margin-top:8px}
+.status-row button{font-size:13px;padding:5px 10px}
+.agent-box{display:grid;gap:8px;padding:12px;border-radius:12px;background:var(--accent-soft);margin-bottom:6px}
+.agent-box h2{font-size:17px;margin:0}
+.agent-box label{margin:2px 0}
+.agent-box .primary{margin-top:4px}
+.agent-box .hint{margin:0}
+.agent-cmd{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.agent-cmd code{font-size:14px;background:var(--panel);border:1px dashed var(--line);border-radius:8px;padding:6px 8px;overflow-wrap:anywhere}
+details.brief-box{margin-top:4px;border-top:0;padding-top:0}
+details.brief-box>summary{padding:8px 0;font-size:14px}
+.example-note{margin:0 0 4px;padding:8px 10px;border-radius:9px;background:var(--accent-soft);color:var(--ink);font-size:13px}
+body.in-viewer [data-a="rec"]{display:none}
+body.no-downloads [data-a="export"],body.no-downloads [data-a="exportBoth"],body.no-downloads [data-a="srt"],
+body.no-downloads #dlProject,body.no-downloads #dlAllSrt,body.no-downloads #dlAllScripts{display:none}
+</style>
+</head>
+<body>
+<header>
+  <p class="backlink"><a href="index.html">← กลับสำนักงานผลิตคลิป</a> · ห้องตัดต่อ (แผนกตัดต่อ)</p>
+  <h1><span class="h-label">สตูดิโอ</span>คลิปเล่าเรื่อง</h1>
+  <p>เลือกแนวคลิปให้ Agent คิดเรื่องให้ หรือกรอกเองครั้งเดียว ได้คลิป 1–5 คลิป พร้อมสคริปต์ที่เว้นจังหวะเล่นอารมณ์ ซับไทยคำต่อคำ เพลง และไฟล์วิดีโอทั้งแนวตั้งและแนวนอน</p>
+</header>
+<main>
+<section class="panel form" aria-label="ข้อมูลคลิป">
+  <div class="agent-box" aria-label="ให้ Agent คิดเรื่อง">
+    <h2>ให้ Agent คิดเรื่องให้ทั้งหมด</h2>
+    <p class="hint">เลือกแค่แนวคลิปกับจำนวน Agent คิดหัวข้อ ไทม์ไลน์ ตัวละคร ฉาก ชื่อซีรีส์ ข้อคิด เลือกสไตล์ภาพ/ผู้เล่า แล้วเขียนสคริปต์ให้ทันที</p>
+    <div class="row">
+      <div><label for="agentGenre">แนวคลิป</label><select id="agentGenre"></select></div>
+      <div><label for="agentCount">จำนวนคลิป</label><select id="agentCount"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
+    </div>
+    <button class="primary" id="agentGo" type="button">ให้ Agent คิดและสร้างคลิป</button>
+    <p class="hint" id="agentNote" role="status"></p>
+  </div>
+  <details class="brief-box" id="briefBox"><summary id="briefSummary">รายละเอียดเรื่อง (Agent กรอกให้ หรือแก้เองได้)</summary>
+  <p class="example-note" id="exampleNote" hidden>กรอกเรื่องตัวอย่างไว้ให้ (เรื่องสมมติ) แก้เป็นเรื่องของคุณแล้วกด "สร้างคลิป"</p>
+  <label for="topic">เรื่อง / หัวข้อ / ชื่อบุคคล</label>
+  <textarea id="topic" rows="2" placeholder="เช่น ชีวิตนักวิ่งมาราธอนจากหมู่บ้านเล็ก ๆ, เมืองที่ฝนตกขึ้นฟ้า"></textarea>
+  <label for="timeline">ไทม์ไลน์ / ข้อเท็จจริง <small>(สไตล์สารคดี: บรรทัดละ 1 เหตุการณ์)</small></label>
+  <textarea id="timeline" rows="5" placeholder="ปี | หัวข้อสั้น | เล่าเหตุการณ์&#10;2008 | เริ่มจากศูนย์ | วิ่งเท้าเปล่า ไปโรงเรียน วันละ 10 กิโล&#10;2015 | เจ็บหนัก | เข่าพัง หมอบอกว่า ห้ามวิ่งอีก&#10;2023 | กลับมา | คว้าเหรียญทอง ซีเกมส์ ครั้งแรก"></textarea>
+  <div class="row">
+    <div><label for="hero">ตัวเอก <small>(ว่าง = "คุณ"/"เขา")</small></label><input id="hero" placeholder="เช่น น้องฝน"></div>
+    <div><label for="side">ตัวละครรอง</label><input id="side" placeholder="เช่น โค้ชประจำหมู่บ้าน"></div>
+  </div>
+  <div class="row">
+    <div><label for="place">ฉาก / สถานที่</label><input id="place" placeholder="เช่น หมู่บ้านริมโขง"></div>
+    <div><label for="series">ชื่อซีรีส์ / ช่อง <small>(แถบบน)</small></label><input id="series" placeholder="เช่น ตำนานคนสู้ชีวิต"></div>
+  </div>
+  <label for="message">ข้อคิด / สิ่งที่อยากสื่อ <small>(ไม่บังคับ)</small></label>
+  <input id="message" placeholder="เช่น ถ้ามีคนบอกว่าทำไม่ได้ เรื่องนี้คือคำตอบ">
+  </details>
+
+  <div class="row">
+    <div><label for="count">จำนวนคลิป</label>
+      <select id="count"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
+    <div><label for="length">ความยาวต่อคลิป</label>
+      <select id="length"><option value="30">~30 วินาที</option><option value="45">~45 วินาที</option><option value="60" selected>~60 วินาที</option><option value="90">~90 วินาที</option></select></div>
+  </div>
+  <label for="visual">สไตล์ภาพบนคลิป</label>
+  <select id="visual"></select>
+  <label for="narrator">สไตล์การเล่า</label>
+  <select id="narrator"></select>
+  <label for="format">ขนาดคลิป</label>
+  <select id="format">
+    <option value="both" selected>ทั้งแนวตั้ง 9:16 และแนวนอน 16:9 (YouTube)</option>
+    <option value="9x16">แนวตั้ง 9:16 — TikTok / Reels / Shorts</option>
+    <option value="16x9">แนวนอน 16:9 — YouTube</option>
+    <option value="1x1">สี่เหลี่ยม 1:1 — Feed</option>
+    <option value="4x5">แนวตั้ง 4:5 — IG Feed</option>
+  </select>
+  <div class="row">
+    <div><label for="caption">รูปแบบซับ</label>
+      <select id="caption"><option value="auto" selected>อัตโนมัติตามสไตล์</option><option value="word">คำต่อคำ (คาราโอเกะ)</option><option value="phrase">ทีละวลี + ไฮไลต์</option></select></div>
+    <div><label for="speed">ความเร็วเสียง/ซับ</label>
+      <select id="speed"><option value="slow">ช้า ละมุน</option><option value="normal" selected>ปกติ (สารคดี)</option><option value="fast">เร็ว</option></select></div>
+  </div>
+  <div class="row">
+    <div><label for="music">ดนตรี</label><select id="music"></select></div>
+    <div><label for="sfx">เสียงประกอบ</label><select id="sfx"><option value="on" selected>เปิด</option><option value="off">ปิด</option></select></div>
+  </div>
+  <label for="banner">กรอบ + แถบหัวเรื่องด้านบน</label>
+  <select id="banner"><option value="on" selected>แสดง (แบบคลิปตัวอย่าง)</option><option value="off">ไม่แสดง ภาพเต็มจอ</option></select>
+  <label for="engine">ผู้เขียนสคริปต์</label>
+  <select id="engine">
+    <option value="local" selected>เทมเพลตในเครื่อง (ฟรี ไม่ต้องต่อเน็ต)</option>
+    <option value="claude">Claude API (เขียนใหม่ทุกครั้ง ละเอียดกว่า)</option>
+  </select>
+  <div id="claudeBox" hidden>
+    <div class="row">
+      <div><label for="apikey">Anthropic API key</label><input id="apikey" type="password" autocomplete="off" placeholder="sk-ant-..."></div>
+      <div><label for="model">โมเดล</label><select id="model">
+        <option value="claude-sonnet-5-5" selected>Sonnet 5.5</option>
+        <option value="claude-opus-5-5">Opus 5.5</option>
+        <option value="claude-haiku-5-5">Haiku 5.5</option></select></div>
+    </div>
+    <p class="hint">คีย์ถูกใช้เรียก API จากเบราว์เซอร์นี้โดยตรง ไม่ถูกบันทึกหรือส่งไปที่อื่น</p>
+  </div>
+  <button class="primary" id="go">สร้างคลิป</button>
+  <div class="status-row"><div class="status" id="status" role="status"></div><button id="stopGen" type="button" hidden>หยุด</button></div>
+  <details>
+    <summary>วิธีเขียนสคริปต์ให้เล่นอารมณ์</summary>
+    <div class="legend">
+      <kbd>/</kbd> เว้นสั้น · <kbd>//</kbd> เว้นกลาง · <kbd>///</kbd> เว้นยาวก่อนจุดพีค<br>
+      <kbd>*คำ*</kbd> ไฮไลต์ · <kbd>(กระซิบ)</kbd> <kbd>(ช้าลง)</kbd> <kbd>(ยิ้ม)</kbd> <kbd>(ลุ้น)</kbd> อารมณ์<br>
+      <kbd>[ฉาก: คำบรรยายภาพ | ป้าย: 1997 | หัวข้อ: ร่างกายไม่ยอมโต | ภาพ: วงกลม | เครดิต: ...]</kbd><br>
+      <kbd>{เสียง: ลม / ฝน / กระดิ่ง}</kbd> เสียงประกอบ · เว้นวรรคระหว่างคำ = ซับเด้งทีละคำตรงนั้น
+    </div>
+  </details>
+</section>
+
+<section aria-label="คลิปที่สร้าง">
+  <div class="bulk" id="bulk" hidden>
+    <button id="dlProject">⬇ project.json (สำหรับ render.py)</button>
+    <button id="dlAllSrt">⬇ ซับ SRT ทุกคลิป</button>
+    <button id="dlAllScripts">⬇ สคริปต์ทุกคลิป (.txt)</button>
+  </div>
+  <div id="clips"><div class="empty">ยังไม่มีคลิป กรอกข้อมูลทางซ้ายแล้วกด "สร้างคลิป"</div></div>
+</section>
+</main>
+
+<div class="sync" id="sync" aria-live="polite">
+  <div class="meta" id="syncTitle"></div>
+  <div class="now" id="syncNow"></div>
+  <div class="next" id="syncNext"></div>
+  <div class="bar">
+    <button class="big" id="syncTap">ท่อนถัดไป (Space)</button>
+    <button id="syncDone">เสร็จ</button>
+    <button id="syncCancel">ยกเลิก</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+document.documentElement.lang = "th";
+/* ================= ทำงานได้ 2 ที่: ไฟล์ในเครื่อง หรือหน้าเว็บที่เผยแพร่บน claude.ai =================
+   บน claude.ai: บันทึกไฟล์ผ่าน downloads, เขียนสคริปต์ด้วย Claude ผ่าน sample (ไม่ต้องใช้คีย์),
+   เสียงอ่าน Claude ผ่าน tts เมื่อเบราว์เซอร์ไม่มีเสียงไทย, ไม่มีไมโครโฟน (ใช้ไฟล์เสียงแทน) */
+const RT = {viewer: !!(window.claude && typeof window.claude.use === "function"), sample:null, downloads:null, tts:null, resolved:false};
+RT.ready = RT.viewer
+  ? Promise.all(["sample","downloads","tts"].map(n => window.claude.use(n).catch(() => null)))
+      .then(([s, d, t]) => { RT.sample = s; RT.downloads = d; RT.tts = t; RT.resolved = true; applyRuntimeUI(); })
+  : Promise.resolve();
+function applyRuntimeUI(){
+  document.body.classList.toggle("in-viewer", RT.viewer);
+  if (!RT.viewer) return;
+  document.body.classList.toggle("no-downloads", !(RT.resolved && RT.downloads));
+  const o = $("engine").querySelector('option[value="claude"]');
+  o.textContent = RT.resolved && !RT.sample ? "Claude (ใช้ไม่ได้ในหน้านี้)" : "Claude (ใช้บัญชี Claude ของคุณ ไม่ต้องใส่คีย์)";
+  o.disabled = RT.resolved && !RT.sample;
+  if (o.disabled && $("engine").value === "claude") $("engine").value = "local";
+  $("claudeBox").hidden = true;
+}
+/* ================= ข้อมูลสไตล์ (ตรงกับ references/styles.md) ================= */
+const VISUALS = {
+  "collage":    {name:"สารคดีคอลลาจ กระดาษฉีก (แบบคลิปตัวอย่าง)", collage:true, caption:"word", hi:"#ffd21f", pal:["#1f2a5c","#f2b21b"],
+                 prompt:"editorial collage, torn paper edges, halftone dots, duotone archival photo, bold flat color blocks, magazine cut-out style"},
+  "pastel3d":   {name:"3D พาสเทลเมืองไทยละมุน (แบบคลิป 2)", pal:["#8f7bd8","#f4b6d2","#ffd9a8","#7ec8f0","#ff8a5c","#ffffff"], city:true, clouds:true,
+                 prompt:"soft low-poly 3D diorama, Thai neighborhood shophouses, pastel pink and lavender sky, warm sunset light, toy-like characters with round heads, tilt-shift, gentle"},
+  "kinetic":    {name:"ดินน้ำมันจัดจ้าน + ตัวหนังสือเด้ง (แบบคลิป 1)", caption:"word", pal:["#2a1a5e","#ff6a3d","#3dd68c","#ffcf3d","#b04dff","#ff9ec7"], spiral:true,
+                 prompt:"claymation 3D characters, bold saturated colors, swirling psychedelic background, kinetic typography, playful"},
+  "watercolor": {name:"สีน้ำอบอุ่น", pal:["#f6ecd8","#e8d3b0","#9cbf8f","#e59a6b","#7fa7c4","#fff8ea"], soft:true, hills:true,
+                 prompt:"warm watercolor storybook illustration, paper texture, soft edges, Thai countryside"},
+  "anime-dusk": {name:"อนิเมะยามเย็น", pal:["#2b2d6e","#f08a4b","#ffd27a","#c45ba8","#ffffff","#8fb6ff"], sun:true, city:true, clouds:true,
+                 prompt:"anime background art, golden hour, volumetric light, nostalgic, detailed sky"},
+  "papercut":   {name:"กระดาษตัดมินิมอล", pal:["#f3e9d7","#e6d5b8","#c2523c","#5f7f6a","#e9b44c","#2f3e46"], hills:true, flat:true,
+                 prompt:"layered paper-cut craft, minimal shapes, soft shadows between layers"},
+  "neon-night": {name:"เมืองกลางคืนนีออน", pal:["#060b2e","#16307a","#22e3ff","#ff4fb3","#7b5cff","#ffe066"], city:true, stars:true, night:true,
+                 prompt:"quiet night city street, glowing neon lights, deep blue, bokeh, dreamy"},
+  "cinematic":  {name:"Cinematic สมจริงแบบภาพยนตร์ (กล้องเคลื่อน ปรับสีฟิล์ม)", caption:"word", hi:"#ffc96b", pal:["#0e1a24","#3a3027","#e0a85b","#2f5d6b","#c96f3b","#f3e3c3"], city:true, grain:true, cinematic:true, grade:"film",
+                 prompt:"cinematic realism, photorealistic film still, natural lighting, 35mm anamorphic lens, shallow depth of field, film color grading"},
+  "film":       {name:"ฟิล์มเก่าอบอุ่น", pal:["#3b2a20","#c79a6b","#f1d9b0","#8a5a3c","#e8c79c","#fff3dc"], city:true, grain:true,
+                 prompt:"35mm film photo, warm grain, nostalgic Thai street, soft focus"},
+};
+const NARRATORS = {
+  "doc":      {name:"สารคดีเล่าชีวิต / ตำนาน (แบบคลิปตัวอย่าง)", rate:1.0, pitch:1.0, music:"doc", speed:"normal"},
+  "lamun":    {name:"เล่าเรื่องละมุน (แบบคลิป 2)", rate:0.9, pitch:0.95, music:"musicbox", speed:"slow"},
+  "kru-nong": {name:"ครูหน่อง: คุณครูใจดีเล่านิทาน", rate:0.85, pitch:1.15, music:"musicbox", speed:"slow"},
+  "mana":     {name:"มานะ: แบบเรียนไทยคลาสสิก", rate:0.9, pitch:1.05, music:"playful", speed:"slow"},
+  "mystery":  {name:"ลึกลับนุ่ม ๆ", rate:0.85, pitch:0.9, music:"dream", speed:"slow"},
+  "funny":    {name:"ขำอบอุ่น", rate:1.0, pitch:1.05, music:"playful", speed:"normal"},
+};
+const MUSICS = {doc:"สารคดีเร้าใจ (เปียโน + จังหวะหัวใจ)", musicbox:"กล่องดนตรีละมุน", lofi:"Lo-fi อบอุ่น", dream:"ฝันกลางคืน", playful:"สนุกเบา ๆ", none:"ไม่มีเพลง"};
+const FORMATS = {"9x16":[1080,1920],"16x9":[1920,1080],"1x1":[1080,1080],"4x5":[1080,1350]};
+const SUB_Y = {"9x16":0.68,"16x9":0.84,"1x1":0.80,"4x5":0.78};
+const ANGLES = ["ปฐมบท: แนะนำโลก","มุมตัวละครรอง","ความลับของเรื่อง","คืนที่เปลี่ยนทุกอย่าง","ตอนจบ: อบอุ่นซึ้ง"];
+const HI = "#e6ff3d";
+const COLLAGE = ["#1f2a5c","#f2b21b","#6cb4e4","#b3123a","#1aa391","#2b4fd6","#e94b6a"];
+const COLOR_TH = {"น้ำเงิน":"#1f2a5c","กรมท่า":"#1f2a5c","เหลือง":"#f2b21b","ฟ้า":"#6cb4e4","แดง":"#b3123a","เขียว":"#1aa391","น้ำเงินสด":"#2b4fd6","ชมพู":"#e94b6a","ดำ":"#16141c"};
+
+const $ = id => document.getElementById(id);
+function fill(sel, obj){ sel.innerHTML = Object.entries(obj).map(([k,v])=>`<option value="${k}">${typeof v==="string"?v:v.name}</option>`).join(""); }
+fill($("visual"), VISUALS); fill($("narrator"), NARRATORS); fill($("music"), MUSICS);
+$("narrator").addEventListener("change", e => { const n=NARRATORS[e.target.value]; $("music").value = n.music; $("speed").value = n.speed; });
+$("engine").addEventListener("change", e => { $("claudeBox").hidden = e.target.value !== "claude" || RT.viewer; });
+
+/* ================= ตัวแยกสคริปต์ + ตั้งเวลา (port จาก build_subs.py) ================= */
+const PAUSE = {"":0.30,"/":0.35,"//":0.80,"///":1.40};
+const CPS = {slow:7.5, normal:9.0, fast:10.5};
+const PAUSE_SCALE = {slow:1.0, normal:0.75, fast:0.55}, MIN_DUR = {slow:1.0, normal:0.85, fast:0.7}; // ช้า = เว้นเต็มที่ (ละมุน), ปกติ = กระชับแบบสารคดี
+const EMO = {"ช้าลง":1.2,"กระซิบ":1.15,"เศร้า":1.15,"ลุ้น":1.1,"ตื่นเต้น":0.92,"ขำ":0.95,"ยิ้ม":1.0};
+const KEYMAP = {"ป้าย":"badge","ปี":"badge","หัวข้อ":"title","ภาพ":"layout","เลย์เอาต์":"layout","เครดิต":"credit","สี":"color","โทน":"tone","กล้อง":"camera","เปลี่ยน":"transition","ทรานซิชัน":"transition","ซ้ำ":"repeat"};
+/* กล้องเคลื่อนและทรานซิชันต่อฉาก (ตรงกับ CAMERA / XFADE ใน render.py) */
+const CAMERA = {"ดันเข้า":"push-in","ซูมเข้า":"push-in","push-in":"push-in","ถอยออก":"pull-out","ซูมออก":"pull-out","pull-out":"pull-out","แพนซ้าย":"pan-left","pan-left":"pan-left","แพนขวา":"pan-right","pan-right":"pan-right","เงยขึ้น":"tilt-up","tilt-up":"tilt-up","ก้มลง":"tilt-down","tilt-down":"tilt-down","นิ่ง":"static","static":"static"};
+const XFADE = {"ตัด":"cut","cut":"cut","จาง":"fade","fade":"fade","ดำ":"fadeblack","จางดำ":"fadeblack","fadeblack":"fadeblack","ขาว":"fadewhite","แฟลช":"fadewhite","fadewhite":"fadewhite","ละลาย":"dissolve","dissolve":"dissolve","ซูม":"zoomin","zoomin":"zoomin","สไลด์":"slideleft","slideleft":"slideleft","สไลด์นุ่ม":"smoothleft","smoothleft":"smoothleft","ปัด":"wipeleft","wipeleft":"wipeleft","วงกลม":"circleopen","เบลอ":"hblur"};
+const CAMERA_CYCLE = {cinematic:["push-in","pan-right","tilt-up","pull-out","pan-left","tilt-down"]}, XFADE_CYCLE = {cinematic:["fade","dissolve","smoothleft","fadeblack","zoomin","fade"]};
+const XFADE_LEN = {cut:0, fadeblack:0.7, fadewhite:0.5, dissolve:0.6, fade:0.5, zoomin:0.5};
+const GRADE_CSS = {film:"contrast(1.06) saturate(0.9) sepia(0.08)", soft:"contrast(0.97) brightness(1.02) saturate(0.96)"};
+const COMBINING = /[ัิ-ฺ็-๎]/;
+const baseLen = s => [...s.replace(/\*/g,"")].filter(ch => !COMBINING.test(ch) && !/\s/.test(ch) && !"\"“”'.,!?…".includes(ch)).length;
+const SEG = (typeof Intl!=="undefined" && Intl.Segmenter) ? new Intl.Segmenter("th",{granularity:"word"}) : null;
+
+function splitLong(text){
+  if (baseLen(text) <= 20 || !text.trim().includes(" ")) return [text];
+  const w = text.split(/\s+/); let best=1, bd=1e9;
+  for (let i=1;i<w.length;i++){ const d=Math.abs(baseLen(w.slice(0,i).join(" "))-baseLen(w.slice(i).join(" "))); if(d<bd){bd=d;best=i;} }
+  return [...splitLong(w.slice(0,best).join(" ")), ...splitLong(w.slice(best).join(" "))];
+}
+function parseScene(body){
+  const parts = body.split("|").map(x=>x.trim()), meta = {};
+  parts.slice(1).forEach(p=>{ const kv = p.match(/^([^:：]+)[:：]\s*(.*)$/); if (kv) meta[KEYMAP[kv[1].trim()] || kv[1].trim()] = kv[2].trim(); });
+  return {desc: parts[0], meta};
+}
+function parseScript(script){
+  const scenes=[], chunks=[]; let pendingSfx=[], open=false; // open = ไฮไลต์ที่ยังไม่ปิดข้ามท่อน
+  for (const raw of script.split(/\r?\n/)){
+    let line = raw.trim(); if(!line) continue;
+    const m = line.match(/^\[\s*ฉาก\s*[:：]\s*(.*?)\s*\]$/);
+    if (m){ scenes.push({...parseScene(m[1]), first:chunks.length}); continue; }
+    const sp = line.match(/^@\s*([^:：]{1,30}?)\s*[:：]\s*(.*)$/); const speaker = sp ? sp[1].trim() : ""; // บทพูดตัวละคร @ชื่อ:
+    if (sp) line = sp[2];
+    for (const s of line.matchAll(/\{\s*เสียง\s*[:：]\s*(.*?)\s*\}/g)) pendingSfx.push(s[1]);
+    line = line.replace(/\{.*?\}/g," ");
+    const parts = line.split(/(\/{1,3})/); let emotion="";
+    for (let i=0;i<parts.length;i+=2){
+      let seg = parts[i]; const mark = parts[i+1]||"";
+      const emos=[...seg.matchAll(/\(([^)]*)\)/g)]; if (emos.length) emotion = emos[emos.length-1][1].trim();
+      seg = seg.replace(/\([^)]*\)/g," ").replace(/\s+/g," ").trim();
+      if (!seg){ if (mark && chunks.length && mark.length > chunks[chunks.length-1].pause.length) chunks[chunks.length-1].pause = mark; continue; }
+      const pieces = splitLong(seg).map(p=>{ if (open) p = "*"+p; const n=(p.match(/\*/g)||[]).length; open = n%2===1; return open ? p+"*" : p; });
+      pieces.forEach((p,k)=>{ chunks.push({text:p, pause:k===pieces.length-1?mark:"/", emotion, speaker, sfx:pendingSfx, scene:Math.max(scenes.length-1,0)}); pendingSfx=[]; });
+    }
+    if (chunks.length && chunks[chunks.length-1].pause==="") chunks[chunks.length-1].pause="/";
+  }
+  if (!scenes.length) scenes.push({desc:"", meta:{}, first:0});
+  return {scenes, chunks};
+}
+function timeline(script, speed, timings, minTotal=0){
+  const {scenes, chunks} = parseScript(script);
+  const cps = CPS[speed]||CPS.slow, ps = PAUSE_SCALE[speed]??1, md = MIN_DUR[speed]??1; let t = 0.4;
+  chunks.forEach((c,i)=>{
+    const tm = timings && timings[i]; c.start = (tm && tm.start!=null) ? tm.start : t;
+    c.end = c.start + Math.max(md, baseLen(c.text)/cps*(EMO[c.emotion]||1));
+    t = c.end + PAUSE[c.pause]*ps;
+  });
+  if (timings) chunks.forEach((c,i)=>{ const n=chunks[i+1]; if (n && c.end > n.start-0.05) c.end = Math.max(c.start+0.3, n.start-0.05); });
+  chunks.forEach((c,i)=>{ const nxt = chunks[i+1] ? chunks[i+1].start : c.end+0.6; c.showEnd = c.pause.length>=2 ? Math.min(nxt, c.end+0.25) : nxt; });
+  let total = (chunks.length ? chunks[chunks.length-1].end : 0) + 1.6; total = Math.max(total, minTotal);
+  scenes.forEach((s,j)=>{ s.start = j===0 ? 0 : (s.first < chunks.length ? chunks[s.first].start-0.2 : total); });
+  scenes.forEach((s,j)=>{ s.end = scenes[j+1] ? scenes[j+1].start : total; });
+  return {scenes, chunks, total};
+}
+const fmtT = t => { const ms=Math.round(t*1000), p=(n,l=2)=>String(n).padStart(l,"0"); return `${p(Math.floor(ms/3600000))}:${p(Math.floor(ms/60000)%60)}:${p(Math.floor(ms/1000)%60)},${p(ms%1000,3)}`; };
+const toSrt = chunks => chunks.map((c,i)=>`${i+1}\n${fmtT(c.start)} --> ${fmtT(c.showEnd)}\n${c.text.replace(/\*/g,"")}\n`).join("\n");
+const speakable = s => s.replace(/\*/g,"").replace(/([฀-๿])\s+(?=[฀-๿])/g,"$1"); // ไม่ให้เสียงอ่านสะดุดตรงช่องว่างระหว่างคำ
+
+/* คำสำหรับซับคำต่อคำ: ช่องว่างที่ผู้เขียนใส่มาก่อน แล้วค่อยตัดคำด้วย Intl.Segmenter (รวมชิ้นสั้นเข้าคำก่อนหน้า กันตัดผิด) */
+function karaokeTokens(text){
+  const out=[]; let hi=false;
+  text.split(/(\*)/).forEach(p=>{
+    if (p==="*"){ hi=!hi; return; } if (!p) return;
+    p.split(/(\s+)/).forEach(piece=>{
+      if (!piece) return;
+      if (/^\s+$/.test(piece)){ out.push({s:" ", space:true, hi}); return; }
+      const segs = (SEG && baseLen(piece) > 4) ? [...SEG.segment(piece)].map(x=>x.segment) : [piece];
+      const merged=[]; segs.forEach(sg=>{ if (merged.length && (baseLen(sg)<=2 || baseLen(merged[merged.length-1])<=1)) merged[merged.length-1]+=sg; else merged.push(sg); });
+      merged.forEach(sg=>out.push({s:sg, hi, w:Math.max(1, baseLen(sg))}));
+    });
+  });
+  return out;
+}
+
+/* ================= ตัวเขียนสคริปต์ในเครื่อง ================= */
+function cleanTopic(t){ t=(t||"").trim().split(/\n/)[0].replace(/[.!?。]+$/,""); if (baseLen(t)>26) t = t.split(/[,，、]| และ /)[0]; return t || "เรื่องเล็ก ๆ ที่อบอุ่น"; }
+function breakThai(s, max=10){
+  if (baseLen(s) <= max+4 || !SEG) return [s];
+  const out=[]; let cur=""; for (const x of [...SEG.segment(s)].map(y=>y.segment)){ if (cur && baseLen(cur+x) > max){ out.push(cur); cur=x; } else cur+=x; }
+  if (cur) out.push(cur); return out;
+}
+function phrasesOf(text, max=12){
+  const words = text.trim().replace(/\s+ๆ/g," ๆ").split(/\s+(?!ๆ)/).filter(Boolean).flatMap(w=>breakThai(w));
+  const out=[]; let cur="";
+  for (const w of words){ // ขึ้นวลีใหม่ก่อนคำเชื่อม เพื่อไม่ให้ตัดกลางประโยค
+    if (cur && (baseLen(cur+w) > max || (/^(แต่|แล้ว|และ|ก็|เพราะ|จน|จึง|ถ้า)$/.test(w) && baseLen(cur) >= 4))){ out.push(cur); cur=w; } else cur = cur ? cur+" "+w : w; }
+  if (cur) out.push(cur); return out;
+}
+const hiSlash = s => phrasesOf(s).map(p=>`*${p}*`).join(" / "); // ไฮไลต์ทีละวลี ไม่ให้ * คร่อมเครื่องหมายเว้น
+function fitLength(S, len, speed){ // ตัดช่วงรองออกจนความยาวใกล้เป้า (เก็บ hook / ปม / ตอนจบไว้เสมอ)
+  const join = arr => arr.map(x=>x.txt).join("\n"); let keep = S;
+  for (const p of [5,4,3,2]){ if (timeline(join(keep), speed).total <= len*1.15) break; keep = keep.filter(x=>x.pri!==p); }
+  return join(keep);
+}
+function parseTimelineText(txt){
+  const short = s => { let out=""; for (const x of s.split(/\s+/)){ if (out && baseLen(out+x) > 14) break; out += (out?" ":"")+x; } return out || s; };
+  return (txt||"").split(/\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
+    const p = l.split("|").map(x=>x.trim());
+    if (p.length >= 3) return {year:p[0], title:p[1], text:p.slice(2).join(" ")};
+    if (p.length === 2) return {year:p[0], title:short(p[1]), text:p[1]};
+    return {year:"", title:short(p[0]), text:p[0]};
+  });
+}
+const NEG = /หมอ|ห้าม|ไม่|พัง|ล้ม|แพ้|เจ็บ|จน|ป่วย|ถอน|พลาด|ทิ้ง|ปฏิเสธ|ขาด|ตก/;
+function docParts(ev, count){ // คลิป 1 = เรื่องเต็มฉบับย่อ, คลิปถัดไปแบ่งไทม์ไลน์เป็นช่วง ๆ
+  if (count <= 1 || ev.length < 2) return Array.from({length:count}, ()=>ev);
+  const per = Math.ceil(ev.length/(count-1));
+  return [ev, ...Array.from({length:count-1}, (_,k)=>{ const p = ev.slice(k*per, (k+1)*per); return p.length ? p : ev.slice(-1); })];
+}
+function docTimeline(b){
+  const topic = cleanTopic(b.topic), ev = parseTimelineText(b.timeline);
+  return ev.length ? ev : [
+    {year:"", title:"จุดเริ่มต้น", text:`ทุกอย่าง เริ่มจาก ศูนย์ ไม่มีใคร เชื่อ ว่า ${topic} จะ เป็นไปได้`},
+    {year:"", title:"ล้มครั้งแรก", text:"ล้มครั้งแรก เจ็บ ที่สุด แต่ ไม่ ยอม แพ้"},
+    {year:"", title:"จุดเปลี่ยน", text:"แล้ว วันหนึ่ง ทุกอย่าง ก็ เปลี่ยน ไป"},
+    {year:"", title:"วันนี้", text:`วันนี้ ${topic} คือ ตำนาน ที่ ทุกคน พูดถึง`}];
+}
+function docMeta(b, idx, count){
+  const ev = docTimeline(b), parts = docParts(ev, count), evs = parts[idx], f = evs[0], l = evs[evs.length-1];
+  const yr = e => e.year ? e.year+" " : "";
+  if (count > 1 && idx === 0) return {title:`${ev[0].title} → ${ev[ev.length-1].title}`, angle:"เรื่องเต็มฉบับย่อ"};
+  return {title: evs.length>1 ? `${yr(f)}${f.title} → ${l.title}` : `${yr(f)}${f.title}`, angle: f.year && l.year && f!==l ? `ช่วง ${f.year}–${l.year}` : (count>1 ? `ช่วงที่ ${idx}` : "เรื่องเต็ม")};
+}
+function docScript(b, idx, count, len, speed){
+  const topic = cleanTopic(b.topic), ev = docTimeline(b), parts = docParts(ev, count), evs = parts[idx];
+  const overview = count > 1 && idx === 0, lastClip = idx === count-1, final = ev[ev.length-1], hasFinal = evs.includes(final);
+  const hookEv = evs.find(e=>NEG.test(e.text) || NEG.test(e.title)) || evs[0];
+  const who = b.hero || phrasesOf(topic)[0];
+  const next = !lastClip ? parts[idx+1][0] : null;
+  const yrOf = e => e.year ? (/^\d{3,4}$/.test(e.year) ? `ปี *${e.year}*` : `*${e.year}*`) : "";
+  const build = maxPh => {
+    const S=[], add=(pri,txt)=>S.push({pri,txt});
+    add(0, `[ฉาก: ${hookEv.text} | ป้าย: ${hookEv.year} | หัวข้อ: ${hookEv.title}]\n(ลุ้น) ${phrasesOf(hookEv.text).slice(0,5).join(" / ")} //\nแต่ วันนี้ // *${final.title}* ///`);
+    add(1, `[ฉาก: ภาพหลักของ ${who} | หัวข้อ: ${who} | ภาพ: วงกลม]\nนี่ คือ เรื่อง ของ / ${hiSlash(b.hero || topic)} //`);
+    evs.forEach((e,k)=>{
+      const climax = e===final && evs.length>2, yr = yrOf(e);
+      let body;
+      if (overview) body = [`*${e.title}*`];
+      else { const ph = phrasesOf(e.text); body = ph.length > maxPh ? ph.slice(0, maxPh) : ph; body[body.length-1] = `*${body[body.length-1].replace(/\*/g,"")}*`; }
+      add(e===hookEv||climax ? 1 : 3, `[ฉาก: ${e.text} | ป้าย: ${e.year} | หัวข้อ: ${e.title}${k%3===1?" | ภาพ: วงกลม":""}]\n${climax?"(ช้าลง) ":""}${yr?yr+" // ":""}${body.join(" / ")} ${climax?"///":"//"}`);
+    });
+    const tail = hasFinal
+      ? `จาก *${ev[0].title}* // สู่ *${final.title}* ///\n` + (b.message ? `${hiSlash(b.message)} ///\n` : "")
+      : `แต่ เรื่อง นี้ // ยัง *ไม่ จบ* ///\n`;
+    add(0, `[ฉาก: ปิดท้าย ${who} | หัวข้อ: ${lastClip?"ฝากกดติดตามไว้":"ตอนหน้า"} | ภาพ: วงกลม]\n` + tail +
+      (lastClip ? `ฝากกดติดตามไว้ / แล้ว คอมเมนต์ บอก ว่า // อยาก ฟัง เรื่อง ของ *ใคร* ต่อ`
+                : `ตอนหน้า // ${next.year ? "ปี *"+next.year+"* / " : ""}*${next.title}* // ฝากกดติดตามไว้ นะ`));
+    return S;
+  };
+  for (const mp of [99,6,4,3,2]){ const S = build(mp); if (timeline(S.map(x=>x.txt).join("\n"), speed).total <= len*1.15 || mp===2) return fitLength(S, len, speed); }
+}
+function localScript(b, narrator, angle, len, idx, count, speed="slow"){
+  if (narrator === "doc") return docScript(b, idx, count, len, speed);
+  const topic = cleanTopic(b.topic), place = b.place || "ซอยเล็ก ๆ แห่งหนึ่ง", msg = b.message;
+  const last = idx === count-1, nextAngle = (angle+1)%5;
+  const S = [], add = (pri, txt) => S.push({pri, txt});
+  if (narrator === "kru-nong"){
+    const H = b.hero || "เด็กน้อย", D = b.side || "คุณยายใจดี";
+    const hooks = [
+      `[ฉาก: ห้องเรียนอบอุ่น กระดานสีเขียว ภาพวาดเด็ก ๆ ติดผนัง]\n(ยิ้ม) สวัสดีค่ะ / เด็ก ๆ จ๋า //\nวันนี้ / ครูมีนิทาน / เรื่อง*${topic}* / มาเล่าให้ฟังค่ะ //\nพร้อมแล้ว / ใช่ไหมคะ? ///`,
+      `[ฉาก: ห้องเรียนอบอุ่น ครูถือหุ่นมือรูป${D}]\n(ยิ้ม) เด็ก ๆ จ๋า // จำ*${D}* / ได้ไหมคะ? ///\nวันนี้ / ครูจะเล่าเรื่องของ*${D}* / ให้ฟังนะคะ //`,
+      `[ฉาก: ห้องเรียน ครูหยิบกล่องปริศนาออกมา]\n(กระซิบ) เด็ก ๆ จ๋า // วันนี้ครูมี*ปริศนา* / มาให้ทายค่ะ ///\nเกี่ยวกับ*${topic}* / ใครตอบได้ / *เก่งมาก*เลยนะคะ //`,
+      `[ฉาก: ห้องนอนเด็ก โคมไฟส้มอ่อน หมอนนุ่ม]\n(กระซิบ) คืนนี้ // ครูจะเล่า*นิทานก่อนนอน* / ให้ฟังนะคะ ///\nเรื่อง*${topic}* / หลับตาฟังเบา ๆ นะคะ //`,
+      `[ฉาก: ห้องเรียนยามเย็น แสงส้มลอดหน้าต่าง]\n(ยิ้ม) เด็ก ๆ จ๋า // วันนี้เป็น*ตอนสุดท้าย* / ของเรื่อง*${topic}*แล้วนะคะ ///`];
+    add(0, hooks[angle]);
+    add(2, `[ฉาก: ${place} สดใส ต้นไม้ ดอกไม้ ท้องฟ้าสีฟ้า]\nกาลครั้งหนึ่ง / นานมาแล้ว // ที่*${place}* / มี*${H}*อยู่คนหนึ่ง //\n${H}ชอบ*${topic}* / มาก*ที่สุด*เลยค่ะ //`);
+    add(4, `[ฉาก: ${H}กับ${D}ช่วยกันทำงาน ยิ้มแย้ม แดดอุ่น]\nทุกวัน / ${H}จะไปหา*${D}* //\nแล้วช่วยกัน / ทำสิ่งเล็ก ๆ / *ด้วยกัน* //`);
+    add(1, `[ฉาก: ${H}ทำหน้าสงสัย มีเครื่องหมายคำถามลอยอยู่]\n(ลุ้น) แต่แล้ว / วันหนึ่ง // ก็เกิด*ปัญหา*ขึ้นค่ะ ///\nเด็ก ๆ ลองทายสิคะ // ${H}จะทำยังไงดี? ///\n(ยิ้ม) ใช่แล้วค่ะ // ${H}*ไม่ยอมแพ้* //`);
+    add(3, `[ฉาก: ${H}กับ${D}ยิ้มดีใจ แสงอุ่น ๆ รอบตัว]\n${H}ค่อย ๆ ลอง / *ทีละนิด* //\nจนในที่สุด /// ก็*ทำได้สำเร็จ* //\n${D}ยิ้ม / แล้วพูดว่า // "*เก่งมากเลยนะ*" ///`);
+    add(5, `[ฉาก: ${H}แบ่งขนมให้เพื่อน ๆ ในห้อง]\nแล้ว${H}ก็ / ไปเล่าให้*เพื่อน ๆ* ฟัง //\nเพื่อน ๆ / *ปรบมือ*ให้ / ดังลั่นห้องเลยค่ะ //`);
+    add(0, `[ฉาก: ครูยิ้มโบกมือ ห้องเรียนอบอุ่น]\nนิทานเรื่องนี้ / สอนให้รู้ว่า // ${hiSlash(msg || "ค่อย ๆ ทำ ทีละนิด ก็สำเร็จได้")} ///\n` +
+      (last ? `เด็ก ๆ ชอบตอนไหน / *มากที่สุด*คะ? // บอกครูใน*คอมเมนต์*นะคะ`
+            : `ตอนหน้า / ครูจะเล่าเรื่อง / *${ANGLES[nextAngle].split(":")[0]}* // อย่าลืมมาฟังกันนะคะ`));
+  } else if (narrator === "mana"){
+    const H = b.hero || "มานะ", D = b.side || "น้องแก้ว";
+    const hooks = [
+      `[ฉาก: บ้านไม้ชนบท รั้วไม้ไผ่ ต้นมะม่วง ท้องฟ้าสดใส ลายเส้นแบบเรียนยุคเก่า]\nนี่คือ*${H}* // ${H}อยู่ที่*${place}* //\n${H}มีเพื่อน / ชื่อ*${D}* //`,
+      `[ฉาก: ลานบ้าน ${D}ยืนยิ้ม ถือตะกร้า]\nนี่คือ*${D}* // ${D}เป็นเพื่อนของ*${H}* //\n${D}ใจดี / ${D}ชอบช่วยเหลือ*ทุกคน* //`,
+      `[ฉาก: ทางเดินดินแดง ต้นไม้สองข้างทาง]\nวันนี้ / ${H}เห็น*ของแปลก* // ${H}ไม่เคยเห็น / มาก่อน ///`,
+      `[ฉาก: ฝนตกตอนเย็น ชายคาบ้านไม้]\nตอนเย็น / *ฝนตก* // ${H}นั่งอยู่ / ที่ชานบ้าน //\n${H}คิดถึง*${D}* ///`,
+      `[ฉาก: ห้องเรียนไม้ ภาพถ่ายเก่าติดผนัง]\nวันนี้ / ${H}*โตขึ้น*แล้ว // ${H}ยังจำ*${topic}* / ได้ดี //`];
+    add(0, hooks[angle]);
+    add(2, `[ฉาก: เช้าตรู่ บ้านไม้ ไก่ขัน]\nวันนี้ / ${H}ตื่นเช้า // ${H}ล้างหน้า / แปรงฟัน //\n${H}ไป*โรงเรียน* / กับ${D} //`);
+    add(4, `[ฉาก: ห้องเรียนไม้ ครูยืนหน้ากระดานดำ]\nครูเล่าเรื่อง*${topic}* / ให้ฟัง // ${H}ตั้งใจฟัง / ${D}ก็ตั้งใจฟัง //\n${H}ชอบ*${topic}* / ${D}ก็ชอบ*${topic}* //`);
+    add(1, `[ฉาก: ทุ่งนาตอนบ่าย ต้นไม้ใหญ่ ควายเดินไกล ๆ]\nตอนบ่าย / ${H}กับ${D} / ไปที่*ทุ่งนา* // ${H}เห็น*สิ่งหนึ่ง* ///\n"${D} / นั่นอะไร?" // ${H}ถาม ///`);
+    add(3, `[ฉาก: เด็กสองคนยิ้มกว้าง ชี้ไปข้างหน้า]\n${D}ยิ้ม // "นั่นคือ*${topic}*ไงล่ะ" //\n${H}*ดีใจมาก* // ${D}ก็*ดีใจ* ///`);
+    add(5, `[ฉาก: เด็กสองคนวิ่งเล่นในทุ่ง ว่าวลอยบนฟ้า]\n${H}วิ่ง / ${D}ก็วิ่ง // ${H}หัวเราะ / ${D}ก็*หัวเราะ* //`);
+    add(0, `[ฉาก: พระอาทิตย์ตก เด็กสองคนเดินกลับบ้าน]\nตอนเย็น / ${H}กลับบ้าน // ${H}เล่าให้*แม่*ฟัง //\nแม่ยิ้ม / แล้วบอกว่า // "${hiSlash(msg || "ลูกเก่งมาก")}" ///\n` +
+      (last ? `เพื่อน ๆ / เคยเห็น*${topic}*ไหม? // บอกกันใน*คอมเมนต์*นะ` : `พรุ่งนี้ / ${H}จะไป*ไหน*อีกนะ? //`));
+  } else { // lamun / mystery / funny
+    const you = !b.hero, H = b.hero || "คุณ", D = b.side || "ป้าข้างบ้าน";
+    const lamunHooks = [
+      `[ฉาก: ${place} ยามเย็น แสงชมพูส้มอบอุ่น มุมกว้างแปลกตา]\n(กระซิบ) ลองนึกภาพว่า // ที่${place} ///\nมีเรื่องหนึ่ง / เกี่ยวกับ*${topic}* //\nที่ไม่มีใคร / *เคยเล่า* ///`,
+      `[ฉาก: หน้าบ้านของ${D} แดดเช้า ต้นไม้ในกระถาง]\n(ยิ้ม) ทุกคนใน${place} / รู้จัก*${D}* //\nแต่ไม่มีใครรู้ว่า / ${D}เก็บเรื่อง*${topic}* / ไว้มา*นานแค่ไหน* ///`,
+      `[ฉาก: ซอยเงียบตอนพลบค่ำ ไฟถนนเพิ่งติด]\n(กระซิบ) เรื่องนี้ // ห้ามเล่าต่อนะ ///\nเพราะ*${topic}* / มี*ความลับ* / ที่ซ่อนอยู่ //`,
+      `[ฉาก: ท้องฟ้ากลางคืนเหนือ${place} ดาวเต็มฟ้า]\n(ช้าลง) คืนนั้น // เป็นคืนที่*เงียบที่สุด* / ของ${place} ///\nและเป็นคืนที่*${topic}* / เปลี่ยนไป*ตลอดกาล* //`,
+      `[ฉาก: แสงเช้าลอดหน้าต่าง ของเก่าบนโต๊ะไม้]\n(ช้าลง) ถ้าวันหนึ่ง // ${H}ลืมทุกอย่าง ///\nขอให้จำ*${topic}* / ไว้*เรื่องเดียว* //`];
+    const special = {
+      mystery: `[ฉาก: ซอยมืด ไฟนีออนกะพริบ หมอกบาง ๆ]\n(กระซิบ) ${you?"คุณ":H}เคยสังเกตไหม /// ว่า*${topic}* //\nมีบางอย่าง / *ไม่ปกติ* ///`,
+      funny: `[ฉาก: ${place} สีสดใส มุมกล้องเอียงตลก ๆ]\n(ขำ) เดี๋ยวนะ // ใครบอกว่า*${topic}* / เป็นเรื่อง*ธรรมดา*? //\nมานี่ / เดี๋ยวเล่าให้ฟัง //`};
+    add(0, angle===0 && special[narrator] ? special[narrator] : lamunHooks[angle]);
+    add(2, `[ฉาก: มุมโดรนเหนือหลังคาบ้านใน${place} เช้าวันใหม่]\nที่นี่ / ทุกคนรู้ดีว่า / *${topic}* / ไม่ใช่เรื่องธรรมดา //\nมันอยู่ใน*ทุกบ้าน* / ทุกซอย / ทุก*ความทรงจำ* //`);
+    add(4, `[ฉาก: ${D}ยิ้มอยู่หน้าร้านเล็ก ๆ แดดบ่ายอบอุ่น]\n(ยิ้ม) อย่าง*${D}* / ที่ตื่นตั้งแต่*ตีห้า* //\nทุกเช้า / จะคอยบอก${H} / ด้วยเสียง*เบาที่สุด* //\n"วันนี้ // ค่อย ๆ ไปนะ" //`);
+    add(5, `[ฉาก: ตลาดเช้า ไอน้ำจากหม้อก๋วยเตี๋ยว แสงลอดผ้าใบ]\nไปตลาด / ไปโรงเรียน / ไป*ทุกที่* //\n${topic} / ก็อยู่ตรงนั้น / *เงียบ ๆ* / เสมอ //`);
+    add(1, `[ฉาก: ถนนกลางคืน ไฟถนนเรืองแสงสีฟ้า]\nแต่${topic} // มี*กฎอยู่ข้อเดียว* ///\n(กระซิบ) ${hiSlash(msg || "อย่ารีบ")} // แล้วมันจะ*มาหา${H}เอง* ///`);
+    add(3, `[ฉาก: ดาดฟ้ากลางคืน ลมพัดเบา ๆ ท้องฟ้าค่อย ๆ เปลี่ยนสี]\n{เสียง: ลมพัด}\n(ลุ้น) ห้าทุ่ม*ห้าสิบเก้า* // ${H}ยืนรอ / อยู่บนดาดฟ้า ///\nท้องฟ้าทั้งเมือง / ค่อย ๆ เปลี่ยน*สี* //\n(ช้าลง) แล้วสิ่งที่${H}รอ /// ก็*มาถึง* //\nแต่มัน*ไม่ได้มาจากฟ้า* ///\nมันอยู่*ข้างตัว${H}* / มาตลอด ///\n{เสียง: กระดิ่ง}`);
+    add(0, `[ฉาก: จอมืดค่อย ๆ จาง ตัวหนังสือตอนหน้า]\n` + (last
+      ? `(ช้าลง) และนี่คือ / เรื่องของ*${topic}* // ที่${place} ///\nขอบคุณที่ฟัง / จนจบนะ // ${you?"คุณ":"เพื่อน ๆ"}ชอบ*ตอนไหน*ที่สุด? / บอกกันใน*คอมเมนต์*นะ`
+      : `*ตอนหน้า* // ${["","เรื่องของ*"+D+"*","*ความลับ*ที่ไม่มีใครรู้","คืนที่*ทุกอย่างเปลี่ยน*","*ตอนจบ*ของเรื่องนี้"][nextAngle] || "เรื่องที่ยังไม่มีใครเล่า"} //\nถ้าเป็นคุณ / จะทำยังไง? // บอกกันใน*คอมเมนต์*นะ`));
+  }
+  return fitLength(S, len, speed);
+}
+
+/* ================= Claude API ================= */
+async function claudeScripts(b, cfg){
+  const doc = cfg.narrator === "doc";
+  const rules = `กติกาสคริปต์ (สำคัญมาก):
+- ขึ้นต้นแต่ละฉากด้วยบรรทัด [ฉาก: คำบรรยายภาพ | ป้าย: ปีหรือช่วงอายุ | หัวข้อ: หัวข้อสั้น 2–4 คำ | ภาพ: เต็ม หรือ วงกลม] (ป้าย/หัวข้อ/ภาพ ไม่บังคับ)
+- (อารมณ์) เช่น (กระซิบ)(ช้าลง)(ยิ้ม)(ลุ้น)(ขำ), *คำสำคัญ* สำหรับไฮไลต์, {เสียง: ลม/ฝน/กระดิ่ง}
+- เครื่องหมายเว้นจังหวะ: "/" เว้นสั้น, "//" เว้นกลาง, "///" เว้นยาวก่อนจุดพีค ทุก 2–4 วลีต้องมี // อย่างน้อยหนึ่งครั้ง
+- วลีละ 4–14 ตัวอักษร สั้นมากแบบซับ TikTok สลับสั้นยาว${doc ? "\n- เว้นวรรคระหว่างคำในแต่ละวลี เช่น 'หมอ บอก ว่า / ร่างกาย เขา ไม่ ยอม โต' เพื่อทำซับเด้งคำต่อคำ" : ""}
+- ยาวประมาณ ${cfg.len} วินาที (ราว ${Math.round(cfg.len*(doc?0.75:0.55))} วลี)
+- ไม่ใช้ !!! ไม่แอบอ้างเป็นบุคคลจริง เขียนใหม่ทั้งหมด`;
+  const structure = doc
+    ? `โครงสารคดีเล่าชีวิต: hook ตัดกัน (อุปสรรคแรก → "แต่วันนี้" + ความสำเร็จ/สถิติ) → ที่มา (เกิดที่ไหน) → อุปสรรค → การเดินทาง/จุดเปลี่ยน → รายละเอียดเฉพาะที่น่าจำ → สถิติความสำเร็จ → "แต่มีอย่างเดียวที่ยังทำไม่ได้" → ล้ม → กลับมา → ย้อนกลับไปที่ hook → ข้อคิด → "ฝากกดติดตามไว้ แล้วคอมเมนต์บอกว่าอยากฟังเรื่องของใครต่อ"
+แต่ละช่วงเวลาเป็น 1 ฉาก ใส่ ป้าย: ปี และ หัวข้อ: สั้น ๆ ใช้ข้อเท็จจริงจากไทม์ไลน์ที่ให้ก่อน ถ้าไม่มีให้ใช้เฉพาะข้อเท็จจริงที่มั่นใจ ห้ามแต่งตัวเลขหรือเหตุการณ์`
+    : `โครง: Hook ชวนจินตนาการ → กฎของโลก → ชีวิตอบอุ่นรายละเอียดเล็ก ๆ → ข้อห้าม/ปม → คืนเงียบ/จุดพีค (ใช้ /// มากขึ้น) → ค้างใจ + ชวนคอมเมนต์`;
+  const voice = {
+    "doc":"สารคดีเล่าชีวิตจริง กระชับ เร้าใจ เล่าบุรุษที่สาม (เขา/เธอ) ใช้ปีและตัวเลขชัด ๆ",
+    "lamun":"เล่าเรื่องละมุน พูดกับคนดูว่า 'คุณ' ลึกลับนิด ๆ อบอุ่น เปิดแบบ 'ลองนึกภาพว่า'",
+    "kru-nong":"โทนคุณครูอนุบาลใจดีเล่านิทาน (ครูหน่อง) เรียกเด็ก ๆ จ๋า ถามแล้วเว้นให้ตอบ ชมเด็ก ลงท้ายนะคะ/ค่ะ ปิดด้วยนิทานเรื่องนี้สอนให้รู้ว่า",
+    "mana":"โทนแบบเรียนภาษาไทยยุคคลาสสิก (มานะ) ประโยคสั้นมาก ซ้ำโครงประโยค เล่าบุรุษที่สาม เรียบง่ายอบอุ่น",
+    "mystery":"ลึกลับนุ่ม ๆ กระซิบ ระทึกเบา ๆ ใช้ /// บ่อย",
+    "funny":"ขำอบอุ่น มุกเบา ๆ ยิ้มได้"}[cfg.narrator];
+  const angles = doc ? ["เรื่องเต็มฉบับย่อ","วัยเด็กและจุดเริ่มต้น","ช่วงที่ล้มหนักที่สุด","การกลับมา","มรดกและบทเรียน"] : ANGLES;
+  const prompt = `เขียนสคริปต์พูดภาษาไทยสำหรับคลิปโซเชียล ${cfg.count} คลิป จากข้อมูลชุดเดียว
+เรื่อง: ${b.topic}
+ไทม์ไลน์/ข้อเท็จจริง:
+${b.timeline || "-"}
+ตัวเอก: ${b.hero||"-"} | ตัวละครรอง: ${b.side||"-"} | ฉาก: ${b.place||"-"} | ข้อคิด: ${b.message||"-"}
+สไตล์ผู้เล่า: ${voice}
+สไตล์ภาพ: ${VISUALS[cfg.visual].name}
+มุมเล่าของแต่ละคลิป (ห้ามซ้ำกัน): ${angles.slice(0,cfg.count).map((a,i)=>`คลิป ${i+1}: ${a}`).join(" | ")}
+คลิปที่ไม่ใช่คลิปสุดท้ายให้จบด้วย hook ไปคลิปถัดไป
+${structure}
+${rules}
+
+ตอบเป็น JSON อย่างเดียว: {"clips":[{"title":"...","angle":"...","script":"...ทั้งสคริปต์ ใช้ \\n ขึ้นบรรทัด..."}]}`;
+  if (RT.viewer){
+    await RT.ready;
+    if (!RT.sample) throw new Error("หน้านี้ใช้ Claude ไม่ได้ เลือก \"เทมเพลตในเครื่อง\" แทน");
+    const ctl = new AbortController(), stop = $("stopGen");
+    stop.hidden = false; stop.onclick = () => ctl.abort();
+    status("Claude กำลังคิด... อาจใช้เวลา 10–60 วินาที (ใช้โควตาบัญชี Claude ของคุณ)");
+    try {
+      const j = await RT.sample.json(prompt, {signal: ctl.signal, cache: false,
+        onText: ({text}) => status(`Claude กำลังเขียน... ${text.length.toLocaleString("th-TH")} ตัวอักษร`)});
+      const clips = Array.isArray(j?.clips) ? j.clips.filter(c => c && typeof c.script === "string" && c.script.trim()) : [];
+      if (!clips.length) throw {code: "invalid_json"};
+      return clips.slice(0, cfg.count);
+    } catch (e) { throw new Error(sampleError(e)); }
+    finally { stop.hidden = true; stop.onclick = null; }
+  }
+  const r = await fetch("https://api.anthropic.com/v1/messages", {method:"POST",
+    headers:{"content-type":"application/json","x-api-key":cfg.key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body: JSON.stringify({model:cfg.model, max_tokens:16000, messages:[{role:"user", content:prompt}]})});
+  if (!r.ok) throw new Error(`Claude API ${r.status}: ${(await r.text()).slice(0,200)}`);
+  const data = await r.json();
+  const text = data.content.filter(c=>c.type==="text").map(c=>c.text).join("");
+  const j = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}")+1));
+  return j.clips.slice(0,cfg.count);
+}
+
+function sampleError(e){
+  const code = e && e.code;
+  if (["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(code)){ RT.sample = null; applyRuntimeUI(); }
+  return ({cancelled:"หยุดการเขียนแล้ว", not_granted:"ไม่ได้อนุญาตให้หน้านี้ใช้ Claude จึงกลับไปใช้เทมเพลตในเครื่อง",
+    sampling_disabled:"บัญชีนี้ใช้ Claude จากหน้านี้ไม่ได้ จึงกลับไปใช้เทมเพลตในเครื่อง", rate_limited:"ใช้ Claude ถี่เกินไปหรือโควตาเต็ม รอสักครู่แล้วกดสร้างใหม่",
+    session_expired:"ต้องเข้าสู่ระบบ Claude ใหม่", refused:"Claude ไม่เขียนเรื่องนี้ ลองปรับหัวข้อ", invalid_json:"อ่านคำตอบจาก Claude ไม่ได้ กดสร้างคลิปอีกครั้ง",
+    empty_completion:"Claude ไม่ได้ตอบกลับ ลองลดจำนวนคลิปหรือความยาว", prompt_too_large:"ข้อมูลยาวเกินไป ลดไทม์ไลน์ลงหน่อย"})[code]
+    || "เชื่อมต่อ Claude ไม่สำเร็จ ลองกดสร้างใหม่อีกครั้ง";
+}
+
+/* ================= เสียง: เพลงสังเคราะห์ + SFX ================= */
+let AC = null;
+function audio(){ if(!AC){ AC = new (window.AudioContext||window.webkitAudioContext)(); } return AC; }
+const CHORDS = {musicbox:[[60,64,67,71],[57,60,64,67],[53,57,60,64],[55,59,62,67]], lofi:[[62,65,69,72],[55,59,62,65],[60,64,67,71],[57,60,64,67]],
+  dream:[[57,60,64,71],[53,57,60,67],[48,55,60,64],[55,59,62,69]], playful:[[60,64,67,72],[65,69,72,77],[67,71,74,79],[60,64,67,72]],
+  doc:[[57,60,64,69],[53,57,60,65],[48,52,55,60],[55,59,62,67]]};
+const mtof = m => 440*Math.pow(2,(m-69)/12);
+function noiseBuf(ac, sec=2){ const b=ac.createBuffer(1, ac.sampleRate*sec, ac.sampleRate), d=b.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; return b; }
+function note(ac, bus, freq, st, peak, dec, type="sine"){ const o=ac.createOscillator(), g=ac.createGain(); o.type=type; o.frequency.value=freq;
+  g.gain.setValueAtTime(0,st); g.gain.linearRampToValueAtTime(peak,st+0.01); g.gain.exponentialRampToValueAtTime(0.0005,st+dec); o.connect(g); g.connect(bus); o.start(st); o.stop(st+dec+0.05); return o; }
+function scheduleMusic(ac, out, kind, t0, dur){
+  if (kind==="none" || !CHORDS[kind]) return [];
+  const nodes=[], prog=CHORDS[kind], bar = kind==="playful"?2.4 : kind==="doc"?2.6 : 4, bus=ac.createGain();
+  bus.gain.setValueAtTime(0,t0); bus.gain.linearRampToValueAtTime(1,t0+1); bus.gain.setValueAtTime(1,t0+Math.max(1,dur-2)); bus.gain.linearRampToValueAtTime(0,t0+dur);
+  const lp = ac.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value = kind==="lofi"?1800:4200; bus.connect(lp); lp.connect(out); nodes.push(bus);
+  for (let b=0; b*bar<dur; b++){
+    const ch = prog[b%prog.length], s0 = t0+b*bar;
+    ch.slice(0,3).forEach(m=>{ const o=ac.createOscillator(), g=ac.createGain(); o.type="triangle"; o.frequency.value=mtof(m-12);
+      const pk = kind==="doc"?0.028:0.035;
+      g.gain.setValueAtTime(0,s0); g.gain.linearRampToValueAtTime(pk,s0+0.6); g.gain.setValueAtTime(pk,s0+bar-0.6); g.gain.linearRampToValueAtTime(0,s0+bar);
+      o.connect(g); g.connect(bus); o.start(s0); o.stop(s0+bar+0.05); nodes.push(o); });
+    if (kind==="doc"){ // เปียโนโน้ตเขบ็ตหนึ่งชั้นวนซ้ำ + จังหวะหัวใจเบา ๆ ทุกจังหวะ
+      for (let k=0;k<8;k++){ const st=s0+k*bar/8; if (st>t0+dur) break; nodes.push(note(ac,bus,mtof(ch[[0,2,3,2,1,2,3,2][k]]+12),st,0.06,0.5,"triangle")); }
+      for (let k=0;k<4;k++){ const st=s0+k*bar/4; if (st>t0+dur || b<2) continue; const o=ac.createOscillator(), g=ac.createGain(); o.frequency.setValueAtTime(95,st); o.frequency.exponentialRampToValueAtTime(42,st+0.25);
+        g.gain.setValueAtTime(0.16,st); g.gain.exponentialRampToValueAtTime(0.0005,st+0.35); o.connect(g); g.connect(bus); o.start(st); o.stop(st+0.4); nodes.push(o); }
+      continue;
+    }
+    for (let k=0;k<8;k++){
+      if (kind==="dream" && k%2) continue;
+      const m = ch[(k*3+b)%ch.length] + ((kind==="musicbox"||kind==="dream")?12:0), st = s0 + k*bar/8;
+      if (st > t0+dur) break;
+      nodes.push(note(ac, bus, mtof(m), st, kind==="dream"?0.05:0.08, kind==="playful"?0.35:1.6));
+    }
+  }
+  if (kind==="lofi"){ const n=ac.createBufferSource(); n.buffer=noiseBuf(ac,2); n.loop=true; const hp=ac.createBiquadFilter(); hp.type="highpass"; hp.frequency.value=3000;
+    const g=ac.createGain(); g.gain.value=0.012; n.connect(hp); hp.connect(g); g.connect(bus); n.start(t0); n.stop(t0+dur); nodes.push(n); }
+  return nodes;
+}
+function sfx(ac, out, kind){
+  const t=ac.currentTime;
+  if (kind==="chime"){ [1568,2093,2637].forEach((f,i)=>note(ac,out,f,t+i*0.09,0.06,1.6)); }
+  else if (kind==="whoosh" || kind==="wind" || kind==="rain" || kind==="paper"){
+    const n=ac.createBufferSource(); n.buffer=noiseBuf(ac, 3); const f=ac.createBiquadFilter(), g=ac.createGain();
+    f.type = kind==="rain" ? "highpass" : "bandpass"; f.Q.value = kind==="paper" ? 2.5 : 0.8;
+    const len = kind==="paper" ? 0.35 : kind==="whoosh" ? 0.7 : 3;
+    if (kind==="whoosh" || kind==="paper"){ f.frequency.setValueAtTime(kind==="paper"?1200:300,t); f.frequency.exponentialRampToValueAtTime(kind==="paper"?5200:2400,t+len*0.9); }
+    else f.frequency.value = kind==="rain"?2500:500;
+    const peak = kind==="paper"?0.07 : kind==="whoosh"?0.05:0.04;
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(peak,t+len*0.35); g.gain.linearRampToValueAtTime(0,t+len);
+    n.connect(f); f.connect(g); g.connect(out); n.start(t); n.stop(t+len); }
+  else if (kind==="pop"){ const o=ac.createOscillator(), g=ac.createGain(); o.frequency.setValueAtTime(900,t); o.frequency.exponentialRampToValueAtTime(300,t+0.08);
+    g.gain.setValueAtTime(0.05,t); g.gain.exponentialRampToValueAtTime(0.0005,t+0.1); o.connect(g); g.connect(out); o.start(t); o.stop(t+0.12); }
+}
+const sfxKind = s => /ลม/.test(s)?"wind": /ฝน/.test(s)?"rain": /กระดิ่ง|ระฆัง|กริ๊ง/.test(s)?"chime": /วูบ|ปลิว|หวือ/.test(s)?"whoosh":"chime";
+
+/* ================= วาดภาพ: ตัวช่วย ================= */
+function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const hexA = (h,a) => { const n=parseInt(h.slice(1),16); return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`; };
+const mix = (hex, to, a) => { const n=parseInt(hex.slice(1),16), m=parseInt(to.slice(1),16); return "#"+[16,8,0].map(s=>Math.round((n>>s&255)*(1-a)+(m>>s&255)*a).toString(16).padStart(2,"0")).join(""); };
+const clamp01 = x => Math.min(1, Math.max(0, x));
+const easeOutBack = k => { const c=1.7; return 1 + (c+1)*Math.pow(k-1,3) + c*Math.pow(k-1,2); };
+const isNight = d => /กลางคืน|ตอนดึก|ดาวเต็มฟ้า|คืนนั้น|ดาดฟ้ากลางคืน|จอมืด|จอดำ|ไฟถนน/.test(d||"");
+const PAT = {};
+function halftone(g, step, rad, color){
+  const k=`${step}|${rad}|${color}`;
+  if (!PAT[k]){ const c=document.createElement("canvas"); c.width=c.height=Math.max(2,Math.round(step)); const x=c.getContext("2d"); x.fillStyle=color; x.beginPath(); x.arc(c.width/2,c.width/2,rad,0,7); x.fill(); PAT[k]=c; }
+  return g.createPattern(PAT[k],"repeat");
+}
+function coverDraw(g, el, x, y, w, h, z=1, px=0.5){ return coverDrawXY(g, el, x, y, w, h, z, px, 0.5); }
+function coverDrawXY(g, el, x, y, w, h, z=1, px=0.5, py=0.5){
+  const iw=el.videoWidth||el.naturalWidth||el.width, ih=el.videoHeight||el.naturalHeight||el.height; if(!iw||!ih) return false;
+  const s=Math.max(w/iw,h/ih)*z, dw=iw*s, dh=ih*s; g.drawImage(el, x+(w-dw)*px, y+(h-dh)*py, dw, dh); return true;
+}
+
+/* ================= สไตล์ทั่วไป ================= */
+function makeSceneArt(style, seed, w, h){
+  const r = rng(seed), V = VISUALS[style], pal = V.pal, blobs=[], bld=[], hills=[];
+  for (let i=0;i<22;i++) blobs.push({x:r()*w*1.3, y:r()*h*0.75, rad:(0.02+r()*0.12)*Math.min(w,h), c:pal[2+Math.floor(r()*(pal.length-2))], a:0.25+r()*0.45, sp:(r()-0.3)*14, ph:r()*6});
+  let x=-40; while (x < w*1.25){ const bw=w*(0.06+r()*0.1), bh=h*(0.07+r()*0.22), win=[]; for(let wy=0; wy<bh-30; wy+=44) for(let wx=14; wx<bw-24; wx+=36) if(r()<0.45) win.push([wx,wy+20]); bld.push({x,bw,bh,win}); x+=bw+r()*10; }
+  for (let i=0;i<4;i++) hills.push({amp:h*(0.03+r()*0.05), fr:1+r()*2.5, ph:r()*6, y:h*(0.62+i*0.09), c:pal[2+(i%(pal.length-2))]});
+  const stars=[]; for(let i=0;i<140;i++) stars.push([r()*w, r()*h*0.6, r()*2+0.5, r()*6]);
+  return {blobs, bld, hills, stars};
+}
+function drawBackground(g, w, h, style, art, desc, u, t){
+  const V = VISUALS[style], pal = V.pal, night = V.night || isNight(desc), dark = /จอมืด|จอดำ/.test(desc||"");
+  const grad = g.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0, night && !V.night ? "#0e1234" : pal[0]); grad.addColorStop(1, night && !V.night ? "#283478" : pal[1]);
+  g.fillStyle = grad; g.fillRect(0,0,w,h);
+  if (dark){ g.fillStyle="rgba(0,0,0,0.78)"; g.fillRect(0,0,w,h); return; }
+  if (night || V.stars) art.stars.forEach(([x,y,s,p])=>{ g.fillStyle=`rgba(255,255,255,${0.4+0.6*Math.abs(Math.sin(t*1.3+p))})`; g.fillRect(x,y,s,s); });
+  if (V.sun && !night){ const sg=g.createRadialGradient(w*0.7,h*0.42,0,w*0.7,h*0.42,Math.min(w,h)*0.45); sg.addColorStop(0,"rgba(255,230,160,0.95)"); sg.addColorStop(0.25,"rgba(255,190,120,0.5)"); sg.addColorStop(1,"rgba(255,160,100,0)"); g.fillStyle=sg; g.fillRect(0,0,w,h); }
+  if (V.spiral){ g.save(); g.translate(w/2,h/2); g.rotate(t*0.25); const R=Math.hypot(w,h); for(let i=0;i<16;i++){ g.fillStyle = i%2? hexA(pal[1+(i%4)],0.55) : hexA(pal[0],0.25); g.beginPath(); g.moveTo(0,0); g.arc(0,0,R,i*Math.PI/8,(i+1)*Math.PI/8); g.fill(); } g.restore(); }
+  art.blobs.forEach(b=>{
+    const x = ((b.x + b.sp*t) % (w*1.3) + w*1.3) % (w*1.3) - w*0.15, y = b.y + Math.sin(t*0.6+b.ph)*10;
+    if (V.clouds && !night){ g.fillStyle=`rgba(255,255,255,${b.a*0.8})`; for(let k=0;k<3;k++){ g.beginPath(); g.ellipse(x+k*b.rad*0.7, y-(k===1?b.rad*0.3:0), b.rad*0.8, b.rad*0.55, 0, 0, 7); g.fill(); } }
+    else if (V.soft){ const rg=g.createRadialGradient(x,y,0,x,y,b.rad*1.6); rg.addColorStop(0,hexA(b.c,b.a)); rg.addColorStop(1,hexA(b.c,0)); g.fillStyle=rg; g.fillRect(x-b.rad*1.6,y-b.rad*1.6,b.rad*3.2,b.rad*3.2); }
+    else { g.fillStyle = hexA(b.c, V.flat||V.spiral ? 0.9 : b.a*(night?0.7:1)); g.beginPath(); g.arc(x,y,b.rad*(V.spiral?0.6:1),0,7); g.fill(); }
+  });
+  if (V.hills) art.hills.forEach((hl,i)=>{ g.fillStyle = V.flat ? hl.c : hexA(hl.c,0.85); if (V.flat){ g.shadowColor="rgba(0,0,0,0.25)"; g.shadowBlur=18; g.shadowOffsetY=-4; }
+    g.beginPath(); g.moveTo(0,h); for(let x=0;x<=w;x+=20) g.lineTo(x, hl.y + Math.sin(x/w*hl.fr*6.28+hl.ph+t*0.05*(i+1))*hl.amp); g.lineTo(w,h); g.fill(); g.shadowColor="transparent"; g.shadowBlur=0; g.shadowOffsetY=0; });
+  if (V.city || night){
+    const base = h*0.86, pan = -u*w*0.04, body = night ? "rgba(10,14,40,0.92)" : hexA(pal[0],0.55), lit = night ? (V.night?pal[2]:"#ffd68a") : pal[2];
+    art.bld.forEach(b=>{ const x=b.x+pan; g.fillStyle=body; g.fillRect(x, base-b.bh, b.bw, h-base+b.bh); g.fillStyle=hexA(lit, night?0.9:0.75); b.win.forEach(([wx,wy])=>g.fillRect(x+wx, base-b.bh+wy, 14, 20)); });
+    if (V.night){ g.strokeStyle=hexA(pal[3],0.8); g.lineWidth=4; g.shadowColor=pal[3]; g.shadowBlur=24; g.beginPath(); g.moveTo(0,base+6); g.lineTo(w,base+6); g.stroke(); g.shadowBlur=0; }
+  }
+}
+function tokens(text){
+  const out=[]; let hi=false;
+  text.split(/(\*)/).forEach(p=>{ if(p==="*"){ hi=!hi; return; } if(!p) return;
+    (SEG ? [...SEG.segment(p)].map(s=>s.segment) : p.split(/(\s+)/)).forEach(s=>out.push({s, hi})); });
+  return out;
+}
+/* ซับทีละวลี (แบบคลิป 2) */
+function drawPhrase(g, chunk, t, cx, cy, size, maxW, hiColor, bouncy){
+  g.font = `800 ${size}px Kanit, sans-serif`; g.textBaseline="middle"; g.lineJoin="round";
+  const lines=[[]], widths=[0];
+  tokens(chunk.text).forEach(tk=>{ const tw=g.measureText(tk.s).width; const L=lines.length-1;
+    if (widths[L]+tw > maxW && widths[L]>0 && tk.s.trim()){ lines.push([]); widths.push(0); }
+    lines[lines.length-1].push({...tk, tw}); widths[widths.length-1]+=tw; });
+  const age=t-chunk.start, left=chunk.showEnd-t, e=Math.min(1,age/0.16), ease=1-Math.pow(1-e,3);
+  const sc = bouncy ? (age<0.12 ? 0.6+0.5*(age/0.12) : 1.1-0.1*Math.min(1,(age-0.12)/0.12)) : 0.92+0.08*ease;
+  const lh=size*1.25;
+  g.save(); g.globalAlpha=Math.max(0,Math.min(1, age/0.08, left/0.12)); g.translate(cx, cy); g.scale(sc,sc); if (bouncy) g.rotate(Math.sin(chunk.start*7)*0.04);
+  lines.forEach((ln,i)=>{ let x=-widths[i]/2; const y=(i-(lines.length-1)/2)*lh;
+    ln.forEach(tk=>{ g.lineWidth=size*0.2; g.strokeStyle="#1a1420"; g.shadowColor="rgba(0,0,0,0.35)"; g.shadowBlur=size*0.25; g.strokeText(tk.s,x,y);
+      g.shadowBlur=0; g.fillStyle= tk.hi ? hiColor : "#ffffff"; g.fillText(tk.s,x,y); x+=tk.tw; }); });
+  g.restore();
+}
+/* ซับคำต่อคำ (แบบคลิปตัวอย่าง): คำใหม่เด้งขึ้นสีเหลือง คำก่อนหน้าเป็นสีขาว */
+function drawKaraoke(g, chunk, t, cx, cy, size, maxW, hiColor){
+  const toks = chunk._k || (chunk._k = karaokeTokens(chunk.text));
+  const words = toks.filter(x=>!x.space), tot = words.reduce((a,x)=>a+x.w,0) || 1, span = (chunk.end-chunk.start)*0.9; let acc=0;
+  words.forEach(x=>{ x.at = chunk.start + acc/tot*span; acc += x.w; });
+  const vis=[]; toks.forEach((x,i)=>{ if (x.space){ const nx = toks.slice(i+1).find(y=>!y.space); if (nx && nx.at<=t && vis.length) vis.push(x); } else if (x.at<=t) vis.push(x); });
+  if (!vis.length) return;
+  const newest = vis.filter(x=>!x.space).pop();
+  g.font = `800 ${size}px Kanit, sans-serif`; g.textBaseline="middle"; g.lineJoin="round";
+  const ws = vis.map(x=>g.measureText(x.s).width), total = ws.reduce((a,b)=>a+b,0), sc = total>maxW ? maxW/total : 1;
+  g.save(); g.globalAlpha = Math.max(0, Math.min(1, (chunk.showEnd-t)/0.12)); g.translate(cx,cy); g.scale(sc,sc);
+  let x = -total/2;
+  vis.forEach((tk,i)=>{ const tw=ws[i];
+    if (!tk.space){ const k=clamp01((t-tk.at)/0.14), pop = tk===newest ? 0.35+0.65*easeOutBack(k) : 1;
+      g.save(); g.translate(x+tw/2, 0); g.scale(pop,pop);
+      g.lineWidth=size*0.17; g.strokeStyle="#16121f"; g.shadowColor="rgba(0,0,0,0.4)"; g.shadowBlur=size*0.2; g.strokeText(tk.s,-tw/2,0); g.shadowBlur=0;
+      g.fillStyle = (tk===newest || tk.hi) ? hiColor : "#ffffff"; g.fillText(tk.s,-tw/2,0); g.restore(); }
+    x += tw; });
+  g.restore();
+}
+function captionMode(opt){ return opt.caption==="auto" ? (VISUALS[opt.visual].caption || "phrase") : opt.caption; }
+function drawCaption(g, chunk, t, cx, cy, size, maxW, opt){
+  const hiC = VISUALS[opt.visual].hi || HI;
+  if (captionMode(opt)==="word") drawKaraoke(g, chunk, t, cx, cy, size, maxW, hiC);
+  else drawPhrase(g, chunk, t, cx, cy, size, maxW, hiC, !!VISUALS[opt.visual].spiral);
+}
+function drawBanner(g, w, h, fmt, title){
+  const size = Math.round(Math.min(w,h)*(fmt==="9x16"?0.06:0.045)); g.font=`800 ${size}px Kanit, sans-serif`; g.textBaseline="middle";
+  const words = tokens(title).map(x=>x.s), lines=[""]; words.forEach(s=>{ const L=lines.length-1; if (g.measureText(lines[L]+s).width > w*0.7 && lines[L]) lines.push(s.trimStart()); else lines[L]+=s; });
+  const lh=size*1.3, bw=Math.max(...lines.map(l=>g.measureText(l).width))+size*1.2, bh=lines.length*lh+size*0.5, x=w*0.06, y=fmt==="9x16"?h*0.07:h*0.06;
+  g.fillStyle="rgba(0,0,0,0.88)"; g.beginPath(); g.roundRect ? g.roundRect(x,y,bw,bh,size*0.3) : g.rect(x,y,bw,bh); g.fill();
+  g.fillStyle="#fff"; lines.forEach((l,i)=>g.fillText(l, x+size*0.6, y+size*0.25+lh*(i+0.5)));
+}
+function sceneAt(tl, t){ let si = tl.scenes.findIndex(s=>t>=s.start && t<s.end); return si<0 ? (t<=0?0:tl.scenes.length-1) : si; }
+function sceneCamera(s, j, style){ return CAMERA[(s.meta?.camera||"").trim().toLowerCase()] || (CAMERA_CYCLE[style]||["push-in","pan-right","pull-out","pan-left"])[j % (CAMERA_CYCLE[style]?.length||4)]; }
+function sceneTransition(tl, j, style){ const s=tl.scenes[j]; if (j<1) return {kind:"none", len:0};
+  const cyc = XFADE_CYCLE[style] || ["fade"], kind = XFADE[(s.meta?.transition||"").trim().toLowerCase()] || cyc[(j-1)%cyc.length];
+  const short = Math.min(tl.scenes[j-1].end-tl.scenes[j-1].start, s.end-s.start); return {kind, len: kind==="cut" ? 0 : Math.min(XFADE_LEN[kind] ?? 0.4, short*0.4)}; }
+function drawGeneric(clip, g, w, h, fmt, t, opt){
+  const tl = clip.tl, style = opt.visual, V = VISUALS[style], si = sceneAt(tl,t), sc = tl.scenes[si];
+  const grade = GRADE_CSS[opt.grade || V.grade || ""] || "";
+  const paint = (j, alpha, extraZoom=1) => { const s=tl.scenes[j], u=clamp01((t-s.start)/Math.max(0.1,s.end-s.start)), e=(1-Math.cos(Math.PI*u))/2;
+    g.save(); g.globalAlpha=alpha; if (grade) g.filter = grade;
+    const m=clip.media[j], cam=sceneCamera(s, j, style);
+    const z = (cam==="pull-out" ? 1.15-0.15*e : cam==="push-in" ? 1+0.15*e : cam==="static" ? 1.04 : 1.12) * extraZoom;
+    const px = cam==="pan-right" ? e : cam==="pan-left" ? 1-e : 0.5, py = cam==="tilt-down" ? e : cam==="tilt-up" ? 1-e : 0.5;
+    if (extraZoom!==1){ g.translate(w/2,h/2); g.scale(extraZoom,extraZoom); g.translate(-w/2,-h/2); }
+    if (!(m && coverDrawXY(g,m,0,0,w,h,z/extraZoom,px,py))){ const zz=1+0.05*u; g.translate(w/2,h/2); g.scale(zz,zz); g.translate(-w/2,-h/2); drawBackground(g,w,h,style,clip.art(fmt,j,w,h),s.desc,u,t); }
+    g.restore(); };
+  const tr = sceneTransition(tl, si, style), since = t - sc.start;
+  if (si>0 && tr.len>0 && since < tr.len/2 + 0.001){ // ครึ่งหลังของทรานซิชัน (ครึ่งแรกอยู่ท้ายฉากก่อน)
+    drawTransition(g, w, h, tr, 0.5 + since/tr.len, j=>paint(j,1), si-1, si);
+  } else {
+    const nx = si+1 < tl.scenes.length ? sceneTransition(tl, si+1, style) : {len:0}, left = sc.end - t;
+    if (nx.len>0 && left < nx.len/2) drawTransition(g, w, h, nx, 0.5 - left/nx.len, j=>paint(j,1), si, si+1);
+    else paint(si,1);
+  }
+  const vg = g.createRadialGradient(w/2,h/2,Math.min(w,h)*0.35,w/2,h/2,Math.hypot(w,h)*0.6); vg.addColorStop(0,"rgba(0,0,0,0)"); vg.addColorStop(1,`rgba(0,0,0,${V.cinematic?0.45:0.35})`); g.fillStyle=vg; g.fillRect(0,0,w,h);
+  if (V.grain){ if (!V.cinematic){ g.fillStyle="rgba(60,40,20,0.10)"; g.fillRect(0,0,w,h); } const r=rng(Math.floor(t*24)); for(let i=0;i<500;i++){ g.fillStyle=`rgba(255,240,220,${r()*(V.cinematic?0.08:0.12)})`; g.fillRect(r()*w, r()*h, 2, 2); } }
+  if (V.cinematic && fmt==="16x9"){ const bh=Math.round((h-w/2.39)/2); g.fillStyle="#000"; g.fillRect(0,0,w,bh); g.fillRect(0,h-bh,w,bh); }
+  if (opt.banner) drawBanner(g,w,h,fmt,clip.title);
+  const c = tl.chunks.find(c=>t>=c.start && t<c.showEnd);
+  if (c) drawCaption(g, c, t, w/2, h*SUB_Y[fmt], Math.round(Math.min(w,h)*(fmt==="9x16"?0.085:0.075)*(V.spiral?1.12:1)), w*0.84, opt);
+  return si;
+}
+/* ทรานซิชันแบบเดียวกับ xfade ของ ffmpeg (ส่วนที่ใช้บ่อย) p = 0..1 */
+function drawTransition(g, w, h, tr, p, paint, a, b){
+  p = clamp01(p);
+  if (tr.kind==="fadeblack" || tr.kind==="fadewhite"){ paint(p<0.5?a:b); g.fillStyle = tr.kind==="fadeblack" ? "#000" : "#fff"; g.globalAlpha = 1-Math.abs(p*2-1); g.fillRect(0,0,w,h); g.globalAlpha=1; return; }
+  if (tr.kind==="slideleft" || tr.kind==="smoothleft" || tr.kind==="wipeleft"){ const e = tr.kind==="smoothleft" ? (1-Math.cos(Math.PI*p))/2 : p;
+    g.save(); g.translate(-w*e,0); paint(a); g.restore(); g.save(); g.translate(w*(1-e),0); paint(b); g.restore(); return; }
+  if (tr.kind==="zoomin"){ g.save(); g.translate(w/2,h/2); g.scale(1+p*0.6,1+p*0.6); g.translate(-w/2,-h/2); paint(a); g.restore(); g.save(); g.globalAlpha=p; paint(b); g.restore(); return; }
+  paint(a); g.save(); g.globalAlpha=p; paint(b); g.restore(); // fade / dissolve / อื่น ๆ
+}
+
+/* ================= สไตล์สารคดีคอลลาจ (แบบคลิปตัวอย่าง) ================= */
+function sceneColor(clip, j){
+  const c = clip.tl.scenes[j]?.meta?.color;
+  if (c) return COLOR_TH[c] || (/^#[0-9a-f]{6}$/i.test(c) ? c : COLLAGE[0]);
+  return COLLAGE[(j*3 + clip.i*2) % COLLAGE.length]; // ×3 mod 7 วนครบทุกสีและไม่ซ้ำสีติดกัน
+}
+function cardRect(w, h, framed){
+  if (!framed) return {x:0, y:0, w, h};
+  return h > w ? {x:w*0.165, y:h*0.165, w:w*0.67, h:h*0.69} : {x:w*0.03, y:h*0.17, w:w*0.94, h:h*0.8};
+}
+function collageLayout(cw, ch){
+  if (cw/ch < 0.9) return {portrait:true, amp:ch*0.007,
+    win:{x0:0, x1:cw, y0:ch*0.285, y1:ch*0.83}, band:{y0:ch*0.815, y1:ch*0.905, y2:ch*0.93},
+    cap:{y:ch*0.86, size:cw*0.08, maxW:cw*0.92},
+    badge:{x:cw*0.06, y:ch*0.148, size:cw*0.055}, title:{x:cw/2, y:ch*0.243, size:cw*0.075, maxW:cw*0.92},
+    credit:{x:cw*0.97, y:ch*0.2, size:Math.max(9,cw*0.017)}};
+  return {portrait:false, amp:ch*0.01,
+    win:{x0:cw*0.36, x1:cw, y0:0, y1:ch*0.8}, band:{y0:ch*0.78, y1:ch*0.9, y2:ch*0.94},
+    cap:{y:ch*0.84, size:Math.min(cw*0.042, ch*0.075), maxW:cw*0.9},
+    badge:{x:cw*0.035, y:ch*0.1, size:ch*0.05}, title:{x:cw*0.18, y:ch*0.42, size:ch*0.07, maxW:cw*0.31},
+    credit:{x:cw*0.985, y:ch*0.04, size:Math.max(9,ch*0.022)}};
+}
+function tornTo(g, x0, x1, y, amp, seed){ const r=rng(seed), n=Math.max(8, Math.round(Math.abs(x1-x0)/(amp*2.4))); for (let i=1;i<=n;i++) g.lineTo(x0+(x1-x0)*i/n, y+(i===n?0:(r()-0.5)*2*amp)); }
+function tornToV(g, x, y0, y1, amp, seed){ const r=rng(seed), n=Math.max(8, Math.round(Math.abs(y1-y0)/(amp*2.4))); for (let i=1;i<=n;i++) g.lineTo(x+(i===n?0:(r()-0.5)*2*amp), y0+(y1-y0)*i/n); }
+function windowPath(g, L, seed, grow=0){
+  const W=L.win, a=L.amp; g.beginPath();
+  if (L.portrait){ g.moveTo(W.x0-2, W.y0-grow); tornTo(g, W.x0-2, W.x1+2, W.y0-grow, a, seed); g.lineTo(W.x1+2, W.y1+grow); tornTo(g, W.x1+2, W.x0-2, W.y1+grow, a, seed+7); }
+  else { g.moveTo(W.x0-grow, W.y0-2); g.lineTo(W.x1+2, W.y0-2); g.lineTo(W.x1+2, W.y1+grow); g.lineTo(W.x0-grow, W.y1+grow); tornToV(g, W.x0-grow, W.y1+grow, W.y0-2, a, seed); }
+  g.closePath();
+}
+function dotCluster(g, cx, cy, R, step, color){
+  g.fillStyle=color;
+  for (let y=-R;y<=R;y+=step) for (let x=-R;x<=R;x+=step){ const d=Math.hypot(x,y)/R; if (d>1) continue; const r=step*0.45*(1-d); if (r<0.7) continue; g.beginPath(); g.arc(cx+x,cy+y,r,0,7); g.fill(); }
+}
+function fitFont(g, text, size, maxW, weight=800){ g.font=`${weight} ${size}px Kanit, sans-serif`; const w=g.measureText(text).width; if (w>maxW){ size*=maxW/w; g.font=`${weight} ${size}px Kanit, sans-serif`; } return size; }
+function drawLabel(g, text, cx, cy, size, maxW, variant, rot, pop){
+  if (!text) return;
+  size = fitFont(g, text, size, maxW - size*0.9);
+  const tw=g.measureText(text).width, pw=tw+size*0.9, ph=size*1.5, sh=size*0.13;
+  g.save(); g.translate(cx,cy); g.rotate(rot); g.scale(pop,pop); g.textAlign="center"; g.textBaseline="middle";
+  const [box, ink] = [["#ffffff","#121212"],["#121212","#ffffff"],["#e8304a","#ffffff"],["#2b4fd6","#ffffff"]][variant%4];
+  g.fillStyle="#0b0b0b"; g.fillRect(-pw/2+sh, -ph/2+sh, pw, ph);
+  g.fillStyle=box; g.fillRect(-pw/2, -ph/2, pw, ph);
+  if (box!=="#ffffff"){ g.strokeStyle="#fff"; g.lineWidth=size*0.06; g.strokeRect(-pw/2, -ph/2, pw, ph); }
+  g.fillStyle=ink; g.fillText(text, 0, size*0.06); g.restore();
+}
+function drawBadge(g, text, x, y, size, variant, k){
+  if (!text) return;
+  g.save(); g.font=`800 ${size}px Kanit, sans-serif`; g.textBaseline="middle";
+  const tw=g.measureText(text).width, pw=tw+size*0.8, ph=size*1.35, sh=size*0.12;
+  g.translate(x - (1-easeOutBack(k))*(pw+x+10), y);
+  const [box, ink] = [["#e8304a","#fff"],["#121212","#fff"],["#ffffff","#121212"]][variant%3];
+  g.fillStyle="#0b0b0b"; g.fillRect(sh, sh, pw, ph); g.fillStyle=box; g.fillRect(0, 0, pw, ph);
+  g.strokeStyle= box==="#ffffff" ? "#121212" : "#fff"; g.lineWidth=size*0.08; g.strokeRect(0, 0, pw, ph);
+  g.fillStyle=ink; g.fillText(text, size*0.4, ph/2+size*0.05); g.restore();
+}
+function drawWindowContent(clip, g, L, j, u, col, meta){
+  const W=L.win, bx=W.x0, by=W.y0, bw=W.x1-W.x0, bh=W.y1-W.y0, m=clip.media[j];
+  const lay = /วงกลม|สติกเกอร์|circle/.test(meta.layout||"") ? "circle" : /เต็ม|full/.test(meta.layout||"") ? "full" : (j%3===1 ? "circle" : "full");
+  const duo = /ขาวดำ|ซีเปีย|เก่า|duo/.test(meta.tone||"");
+  const fine = halftone(g, Math.max(4,Math.round(bw/110)), Math.max(1,bw/110*0.2), "rgba(0,0,0,0.13)");
+  if (lay === "circle"){
+    g.fillStyle = mix(col,"#ffffff",0.22); g.fillRect(bx,by,bw,bh);
+    if (m){ g.save(); g.globalAlpha=0.35; g.filter="blur(10px) grayscale(1)"; coverDraw(g,m,bx,by,bw,bh,1.15); g.filter="none"; g.restore(); }
+    const R=Math.min(bw,bh)*0.42, cx=bx+bw/2, cy=by+bh*0.53, acc = (col==="#b3123a"||col==="#e94b6a") ? "#f6c624" : "#e8304a", zz=1+0.04*u;
+    g.save(); g.translate(cx,cy); g.scale(zz,zz); g.translate(-cx,-cy);
+    g.fillStyle=acc; g.beginPath(); g.arc(cx,cy,R,0,7); g.fill();
+    g.save(); g.beginPath(); g.arc(cx,cy,R,0,7); g.clip(); g.fillStyle=halftone(g, Math.max(6,Math.round(R/9)), Math.max(1.5,R/9*0.25), "rgba(255,255,255,0.35)"); g.fillRect(cx-R,cy-R,R*2,R*2); g.restore();
+    if (m && m.dataset && m.dataset.cutout === "1"){ // PNG พื้นหลังโปร่งใส → สติกเกอร์คนขอบขาว โผล่พ้นวงกลม (แบบคลิปตัวอย่าง)
+      const st = stickerCanvas(m), hh = Math.min(R*1.85, bh*0.9), ww = Math.min(st.width*hh/st.height, bw*0.98), h2 = st.height*ww/st.width;
+      g.shadowColor="rgba(0,0,0,0.35)"; g.shadowBlur=R*0.08; g.shadowOffsetY=R*0.03;
+      g.drawImage(st, cx-ww/2, Math.min(by+bh, cy+R*1.02)-h2, ww, h2); g.shadowBlur=0; g.shadowOffsetY=0;
+      g.restore(); return;
+    }
+    const r2=R*0.8, ccy=cy-R*0.06;
+    g.shadowColor="rgba(0,0,0,0.35)"; g.shadowBlur=R*0.1; g.fillStyle="#fff"; g.beginPath(); g.arc(cx,ccy,r2,0,7); g.fill(); g.shadowBlur=0;
+    g.save(); g.beginPath(); g.arc(cx,ccy,r2*0.93,0,7); g.clip();
+    if (m) coverDraw(g,m,cx-r2,ccy-r2,r2*2,r2*2,1.05);
+    else { g.fillStyle=mix(col,"#ffffff",0.55); g.fillRect(cx-r2,ccy-r2,r2*2,r2*2); g.fillStyle=mix(col,"#000000",0.35);
+      g.beginPath(); g.arc(cx,ccy-r2*0.2,r2*0.32,0,7); g.fill(); g.beginPath(); g.ellipse(cx,ccy+r2*0.72,r2*0.62,r2*0.5,0,0,7); g.fill(); }
+    g.restore(); g.restore();
+    return;
+  }
+  if (m){
+    g.save(); g.filter = duo ? "grayscale(1) contrast(1.25)" : "saturate(1.08) contrast(1.05)";
+    coverDraw(g, m, bx, by, bw, bh, 1+0.08*u, j%2 ? u : 1-u*0.5); g.filter="none";
+    if (duo){ g.globalCompositeOperation="multiply"; g.fillStyle=mix(col,"#ffffff",0.5); g.fillRect(bx,by,bw,bh); g.globalCompositeOperation="source-over"; }
+    g.restore();
+  } else { // ภาพแทนที่ (ยังไม่ได้ใส่สื่อ): ฟ้าโทนสีฉาก + วงกลมฮาล์ฟโทน + เมือง
+    const sky=g.createLinearGradient(0,by,0,by+bh); sky.addColorStop(0,mix(col,"#ffffff",0.55)); sky.addColorStop(1,mix(col,"#ffffff",0.2)); g.fillStyle=sky; g.fillRect(bx,by,bw,bh);
+    const R=Math.min(bw,bh)*0.3, cx=bx+bw*0.5, cy=by+bh*(0.62-0.08*u);
+    g.fillStyle="#f6c624"; g.beginPath(); g.arc(cx,cy,R,0,7); g.fill();
+    g.save(); g.beginPath(); g.arc(cx,cy,R,0,7); g.clip(); g.fillStyle=halftone(g, Math.max(6,Math.round(R/8)), Math.max(1.5,R/8*0.28), "rgba(230,120,20,0.45)"); g.fillRect(cx-R,cy-R,2*R,2*R); g.restore();
+    const r=rng(j*31+clip.i*7+1); g.fillStyle=mix(col,"#000000",0.3); let x=bx; const base=by+bh*0.86;
+    while (x < bx+bw){ const ww=bw*(0.06+r()*0.1), hh=bh*(0.08+r()*0.28); g.fillRect(x, base-hh, ww, bh); x+=ww+r()*bw*0.02; }
+    g.fillStyle=mix(col,"#000000",0.45); g.fillRect(bx, base, bw, bh);
+  }
+  g.fillStyle=fine; g.fillRect(bx,by,bw,bh);
+}
+function stickerCanvas(img){ // ขอบขาวรอบรูปที่ตัดพื้นหลังแล้ว (คำนวณครั้งเดียวต่อรูป)
+  if (img._sticker) return img._sticker;
+  const w=img.naturalWidth||img.width, h=img.naturalHeight||img.height, s=Math.max(4, Math.round(Math.min(w,h)*0.03));
+  const c=document.createElement("canvas"); c.width=w+s*4; c.height=h+s*4; const x=c.getContext("2d");
+  for (let a=0;a<16;a++){ const ang=a/16*Math.PI*2; x.drawImage(img, s*2+Math.cos(ang)*s, s*2+Math.sin(ang)*s); }
+  x.globalCompositeOperation="source-in"; x.fillStyle="#ffffff"; x.fillRect(0,0,c.width,c.height);
+  x.globalCompositeOperation="source-over"; x.drawImage(img, s*2, s*2);
+  return (img._sticker = c);
+}
+function drawCard(clip, g, cw, ch, j, t, opt){
+  const s=clip.tl.scenes[j], meta=s.meta||{}, col=sceneColor(clip,j), L=collageLayout(cw,ch), seed=clip.i*131+j*17+3;
+  const u=clamp01((t-s.start)/Math.max(0.1,s.end-s.start)), age=t-s.start;
+  g.fillStyle=col; g.fillRect(0,0,cw,ch);
+  g.fillStyle=halftone(g, Math.max(5,Math.round(cw/75)), Math.max(1,cw/75*0.16), "rgba(0,0,0,0.12)"); g.fillRect(0,0,cw,ch);
+  g.fillStyle=mix(col,"#ffffff",0.75); windowPath(g, L, seed+1, L.amp*1.6); g.fill(); // ขอบกระดาษสีอ่อนรอบหน้าต่างภาพ
+  g.save(); windowPath(g, L, seed); g.clip(); drawWindowContent(clip, g, L, j, u, col, meta); g.restore();
+  if (L.portrait && j%3===2){ g.save(); g.translate(0, L.win.y0 + (L.win.y1-L.win.y0)*0.07); g.rotate(-0.07); g.fillStyle="rgba(248,204,38,0.93)"; g.fillRect(-cw*0.1, 0, cw*1.25, ch*0.03); g.restore(); }
+  dotCluster(g, L.portrait ? cw*0.9 : cw*0.3, L.portrait ? L.win.y0-ch*0.02 : ch*0.2, Math.min(cw,ch)*0.12, Math.min(cw,ch)/55, "rgba(0,0,0,0.5)");
+  dotCluster(g, cw*0.08, L.band.y0-ch*0.03, Math.min(cw,ch)*0.1, Math.min(cw,ch)/55, "rgba(255,255,255,0.3)");
+  const band = (y, color, sd, amp) => { g.fillStyle=color; g.beginPath(); g.moveTo(-2,ch+2); g.lineTo(-2,y); tornTo(g,-2,cw+2,y,amp,sd); g.lineTo(cw+2,ch+2); g.closePath(); g.fill(); };
+  band(L.band.y0, col, seed+11, L.amp); band(L.band.y1, "#f6c624", seed+13, L.amp*0.8); band(L.band.y2, mix(col,"#000000",0.4), seed+17, L.amp*0.8);
+  if (meta.credit){ g.save(); g.font=`600 ${L.credit.size}px Kanit, sans-serif`; g.textAlign="right"; g.textBaseline="middle"; g.fillStyle="rgba(255,255,255,0.85)"; g.shadowColor="rgba(0,0,0,0.6)"; g.shadowBlur=3; g.fillText("ภาพ: "+meta.credit, L.credit.x, L.credit.y); g.restore(); }
+  drawBadge(g, meta.badge, L.badge.x, L.badge.y, L.badge.size, j, clamp01((age-0.15)/0.3));
+  const k=clamp01((age-0.25)/0.3), pop = k<=0 ? 0 : 0.6+0.4*easeOutBack(k);
+  if (pop>0) drawLabel(g, meta.title, L.title.x, L.title.y, L.title.size, L.title.maxW, j%2 ? 1 : (j%4===0 ? 0 : 2), (j%2?1:-1)*0.025, pop);
+  return L;
+}
+function drawHeader(g, w, h, clip, opt){
+  const portrait = h > w, top = portrait ? h*0.025 : h*0.012, avail = portrait ? h*0.13 : h*0.15, lh = avail/3;
+  const lines = [[opt.series || cleanTopic(opt.brief.topic), "#ffffff", "#000000"], [clip.title, "#ffd21f", "#000000"], [`ตอนที่ ${clip.i+1}/${clip.n} · ${clip.angle}`, "#ff2b2b", "#ffffff"]];
+  g.save(); g.textAlign="center"; g.textBaseline="middle"; g.lineJoin="round";
+  lines.forEach(([txt, fillC, strokeC], i)=>{ const size = fitFont(g, txt, lh*(i===0?0.84:0.72), w*0.92); const y = top + lh*(i+0.5);
+    g.lineWidth=size*0.16; g.strokeStyle=strokeC; g.strokeText(txt, w/2, y); g.fillStyle=fillC; g.fillText(txt, w/2, y); });
+  g.restore();
+}
+function drawCollage(clip, g, w, h, fmt, t, opt){
+  const tl=clip.tl, R=cardRect(w,h,opt.banner), si=sceneAt(tl,t), since=t-tl.scenes[si].start, TR=0.5;
+  g.fillStyle="#000"; g.fillRect(0,0,w,h);
+  let show=si, slab=null;
+  if (si>0 && since<TR){ const p=since/TR; if (p<0.5){ show=si-1; slab=[1-(p/0.5)*1.2, 1.02]; } else slab=[-0.2, 1.02-((p-0.5)/0.5)*1.25]; }
+  g.save(); g.beginPath(); g.rect(R.x,R.y,R.w,R.h); g.clip(); g.translate(R.x,R.y);
+  const L = drawCard(clip, g, R.w, R.h, show, t, opt);
+  if (slab){ // ทรานซิชันกระดาษปาด: แผ่นสีของฉากใหม่ปาดผ่านจอ
+    const col=sceneColor(clip,si), xa=slab[0]*R.w, xb=slab[1]*R.w, r=rng(si*13+5), n=16;
+    g.fillStyle=col; g.beginPath(); g.moveTo(xb,-2); g.lineTo(xa,-2);
+    for (let i=1;i<=n;i++) g.lineTo(xa + (i%2 ? -R.w*0.035 : 0) + (r()-0.5)*R.w*0.012, R.h*i/n);
+    g.lineTo(xb,R.h+2); g.closePath(); g.fill();
+    g.fillStyle=halftone(g, Math.max(5,Math.round(R.w/75)), Math.max(1,R.w/75*0.16), "rgba(0,0,0,0.12)"); g.fill();
+  }
+  const c = tl.chunks.find(c=>t>=c.start && t<c.showEnd);
+  if (c) drawCaption(g, c, t, R.w/2, L.cap.y, L.cap.size, L.cap.maxW, opt);
+  g.restore();
+  if (opt.banner) drawHeader(g, w, h, clip, opt);
+  return si;
+}
+function drawFrame(clip, g, w, h, fmt, t, opt){ return VISUALS[opt.visual].collage ? drawCollage(clip,g,w,h,fmt,t,opt) : drawGeneric(clip,g,w,h,fmt,t,opt); }
+
+/* ================= คลิป ================= */
+const state = {clips:[], opt:null};
+class Clip {
+  constructor(i, n, data, opt){
+    Object.assign(this, {i, n, title:data.title, angle:data.angle, script:data.script, opt});
+    this.fmt = opt.format==="both" ? "9x16" : opt.format; this.media=[]; this.voice=null; this.voiceBlob=null; this.voiceName=null; this.timings=null; this.arts={};
+    this.retime(); this.build();
+  }
+  art(fmt,j,w,h){ const k=fmt+":"+j; return this.arts[k] ||= makeSceneArt(this.opt.visual, this.i*100+j+1, w, h); }
+  retime(){ this.tl = timeline(this.script, this.opt.speed, this.timings, this.voice ? this.voice.duration+0.5 : 0); }
+  build(){
+    const el = document.createElement("article"); el.className="panel clip"; this.el=el;
+    const both = this.opt.format==="both";
+    el.innerHTML = `<h2></h2><div><span class="tag" data-angle></span><span class="tag">${VISUALS[this.opt.visual].name.split(" (")[0]}</span><span class="tag">${NARRATORS[this.opt.narrator].name.split(/ [(:]/)[0]}</span></div>
+      <div class="stage"><div class="cv-wrap"><canvas></canvas></div>
+      <div class="tools">
+        <button data-a="play">▶ เล่นพรีวิว</button><button data-a="stop">⏹ หยุด</button>
+        ${both?'<button data-a="flip">⇄ สลับ 9:16 / 16:9</button>':""}
+        <button data-a="export">⬇ วิดีโอ (ขนาดนี้)</button>${both?'<button data-a="exportBoth">⬇ วิดีโอทั้ง 2 ขนาด</button>':""}
+        <button data-a="srt">⬇ ซับ SRT</button>
+        <button data-a="rec">🎙 อัดเสียงพากย์ + ซิงก์ซับ</button>
+        <button data-a="pickVoice">📁 ใช้ไฟล์เสียงพากย์</button>
+        <button data-a="tapSync" hidden>⏱ แตะเพื่อซิงก์ซับกับไฟล์เสียง</button>
+        <button data-a="pickMedia">🖼 ใส่รูป/วิดีโอฉาก</button>
+        <input type="file" data-f="voice" accept="audio/*" hidden><input type="file" data-f="media" accept="image/*,video/*" multiple hidden>
+        <div style="width:100%"><div class="progress"><i></i></div><div class="meta" data-m></div></div>
+      </div></div>
+      <details open><summary>สคริปต์พูด (แก้ได้ พรีวิวอัปเดตทันที)</summary><textarea class="script" spellcheck="false"></textarea></details>
+      <details><summary>สตอรีบอร์ด + prompt ภาพ AI ต่อฉาก</summary><div data-sb></div></details>`;
+    el.querySelector("h2").textContent = `คลิป ${this.i+1}: ${this.title}`;
+    el.querySelector("[data-angle]").textContent = this.angle;
+    this.cv = el.querySelector("canvas"); this.g = this.cv.getContext("2d");
+    const ta = el.querySelector("textarea"); ta.value = this.script;
+    ta.addEventListener("input", ()=>{ this.script = ta.value; this.timings=null; this.retime(); this.refresh(); });
+    el.querySelector(".tools").addEventListener("click", e=>{ const a=e.target.closest("button")?.dataset.a; if(a) this[a]?.(); });
+    el.querySelector('[data-f="voice"]').addEventListener("change", e=>this.loadVoice(e.target.files[0]));
+    el.querySelector('[data-f="media"]').addEventListener("change", e=>this.loadMedia([...e.target.files]));
+    this.setFmt(this.fmt);
+  }
+  setFmt(f){ this.fmt=f; const [w,h]=FORMATS[f]; this.cv.width=w; this.cv.height=h;
+    this.el.querySelector(".cv-wrap").className = "cv-wrap " + (w>=h?"h":"v"); this.el.querySelector(".stage").classList.toggle("horiz", w>h); this.refresh(); }
+  flip(){ this.setFmt(this.fmt==="9x16"?"16x9":"9x16"); }
+  refresh(){
+    const tl=this.tl, fast = tl.chunks.filter(c=>baseLen(c.text)/Math.max(0.1,c.showEnd-c.start)>12).length;
+    this.el.querySelector("[data-m]").innerHTML = `${tl.chunks.length} ท่อนซับ · ${tl.scenes.length} ฉาก · ยาว ${tl.total.toFixed(1)} วินาที · ${this.fmt.replace("x",":")}`+
+      (this.voice?` · เสียงพากย์: ${this.voiceName.replace(/[<>&]/g,"")}`:"")+(this.timings?" · ซับซิงก์กับเสียงจริงแล้ว":"")+(fast?` · <span class="warn">⚠ ${fast} ท่อนเร็วเกินไป ใส่ / เพิ่ม</span>`:"");
+    const pc = tl.chunks[Math.min(1, tl.chunks.length-1)], pt = pc ? Math.min(pc.start + (pc.end-pc.start)*0.95, pc.showEnd-0.05) : 0.5;
+    drawFrame(this, this.g, this.cv.width, this.cv.height, this.fmt, Math.max(pt, tl.scenes[0] ? Math.min(0.9, tl.total) : 0), this.optDraw());
+    const sb = this.el.querySelector("[data-sb]"), chars = [this.opt.brief.hero, this.opt.brief.side].filter(Boolean).join(", ");
+    sb.innerHTML = ""; tl.scenes.forEach((s,j)=>{ const d=document.createElement("div"); d.className="scene";
+      const lines = tl.chunks.filter(c=>c.scene===j).map(c=>c.text.replace(/\*/g,"")).join(" ");
+      const prompt = `${s.desc}. ${VISUALS[this.opt.visual].prompt}${chars?`, characters: ${chars}`:""}, ${this.fmt==="9x16"?"vertical 9:16":"16:9 widescreen"}, no text`;
+      d.innerHTML = `<b></b><div></div><code></code><button style="margin-top:6px;font-size:12px">คัดลอก prompt</button>`;
+      d.querySelector("b").textContent = `ฉาก ${j+1} · ${s.start.toFixed(1)}–${s.end.toFixed(1)} วิ${s.meta.badge?" · ป้าย "+s.meta.badge:""}${s.meta.title?" · หัวข้อ "+s.meta.title:""}${this.media[j]?" · 🖼 มีสื่อแล้ว":""}`;
+      d.querySelector("div").textContent = `${s.desc}: “${lines}”`; d.querySelector("code").textContent = prompt;
+      const code = d.querySelector("code"), pick = () => { const r = document.createRange(); r.selectNodeContents(code); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); status("เลือกข้อความไว้แล้ว กด Ctrl+C เพื่อคัดลอก"); };
+      d.querySelector("button").onclick = () => { try { const p = navigator.clipboard?.writeText(prompt); p ? p.then(() => status("คัดลอก prompt แล้ว"), pick) : pick(); } catch { pick(); } };
+      sb.appendChild(d); });
+  }
+  optDraw(){ return this.opt; }
+  pickVoice(){ this.el.querySelector('[data-f="voice"]').click(); }
+  pickMedia(){ this.el.querySelector('[data-f="media"]').click(); }
+  async loadVoice(file){ if(!file) return; const ac=audio(); this.voiceBlob=file; this.voiceName=file.name;
+    this.voice = await ac.decodeAudioData(await file.arrayBuffer()); this.timings=null; this.retime();
+    this.el.querySelector('[data-a="tapSync"]').hidden=false; this.refresh(); status(`โหลดเสียงพากย์คลิป ${this.i+1} แล้ว กด "แตะเพื่อซิงก์" เพื่อให้ซับตรงเสียงจริง`); }
+  async loadMedia(files){
+    let j = 0;
+    for (const f of files){ while (j<this.tl.scenes.length && this.media[j]) j++; if (j>=this.tl.scenes.length) j = 0;
+      const url = URL.createObjectURL(f); let el;
+      if (f.type.startsWith("video")){ el=document.createElement("video"); el.src=url; el.muted=true; el.loop=true; el.playsInline=true; await new Promise(r=>{ el.onloadeddata=r; el.onerror=r; }); el.play().catch(()=>{}); }
+      else { el=new Image(); el.src=url; await el.decode().catch(()=>{});
+        if (/png|webp/i.test(f.type) && el.naturalWidth){ // มีพื้นหลังโปร่งใสไหม → ใช้เป็นสติกเกอร์
+          try { const c=document.createElement("canvas"); c.width=c.height=48; const x=c.getContext("2d"); x.drawImage(el,0,0,48,48);
+            const d=x.getImageData(0,0,48,48).data; let n=0; for (let i=3;i<d.length;i+=4) if (d[i]<200) n++;
+            if (n > 48*48*0.05) el.dataset.cutout = "1"; } catch {} } }
+      el.dataset.name = f.name; this.media[j++] = el; }
+    this.refresh(); }
+  /* ---- เล่น ---- */
+  stop(){ this.playing=false; cancelAnimationFrame(this.raf); clearTimeout(this.raf); window.speechSynthesis?.cancel(); if (this.ttsOff){ this.ttsOff(); this.ttsOff=null; RT.tts?.stop().catch(()=>{}); } (this.nodes||[]).forEach(n=>{ try{n.stop()}catch{} }); this.nodes=[]; if(this.master){ try{this.master.disconnect()}catch{} } this.media.forEach(m=>m?.pause?.()); }
+  startAudio(recordDest){
+    const ac=audio(); ac.resume(); const master=ac.createGain(); master.connect(ac.destination); if (recordDest) master.connect(recordDest); this.master=master;
+    const t0 = ac.currentTime+0.15; this.nodes = scheduleMusic(ac, master, this.opt.music, t0, this.tl.total);
+    if (this.voice){ const s=ac.createBufferSource(); s.buffer=this.voice; s.connect(master); s.start(t0); this.nodes.push(s); }
+    this.media.forEach(m=>{ if(m?.play){ m.currentTime=0; m.play().catch(()=>{}); } });
+    return {ac, t0, master};
+  }
+  loop(clock, onEnd, recording){
+    const {ac,master} = this.aud; let lastScene=-1, lastChunk=-1;
+    const tick = () => { if(!this.playing) return; const t = clock();
+      const si = drawFrame(this, this.g, this.cv.width, this.cv.height, this.fmt, t, this.optDraw());
+      if (this.opt.sfx){ if (si!==lastScene && lastScene>=0) sfx(ac, master, VISUALS[this.opt.visual].collage ? "paper" : "whoosh");
+        const ci = this.tl.chunks.findIndex(c=>t>=c.start && t<c.showEnd);
+        if (ci>=0 && ci!==lastChunk){ this.tl.chunks[ci].sfx.forEach(s=>sfx(ac,master,sfxKind(s))); if (VISUALS[this.opt.visual].spiral) sfx(ac,master,"pop"); lastChunk=ci; } }
+      lastScene = si;
+      this.el.querySelector(".progress i").style.width = Math.min(100, t/this.tl.total*100)+"%";
+      if (t >= this.tl.total){ this.playing=false; onEnd?.(); return; }
+      this.raf = recording ? setTimeout(tick, 1000/30) : requestAnimationFrame(tick); };
+    tick();
+  }
+  play(){
+    state.clips.forEach(c=>c!==this && c.stop()); this.stop(); this.playing=true; this.aud=this.startAudio();
+    const {ac,t0} = this.aud;
+    const voices = (window.speechSynthesis?.getVoices?.() || []).filter(v=>/^th/i.test(v.lang));
+    if (this.voice){ this.loop(()=>ac.currentTime-t0); return; }
+    if (!voices.length){
+      if (RT.tts){ this.playTts(); return; }
+      status("ไม่พบเสียงอ่านภาษาไทยในเบราว์เซอร์นี้ พรีวิวได้เฉพาะภาพ ซับ และเพลง" + (RT.viewer ? " (ใส่ไฟล์เสียงพากย์ได้ด้วยปุ่ม 📁)" : " (อัดเสียงเองได้ด้วยปุ่ม 🎙)"));
+      this.loop(()=>ac.currentTime-t0); return; }
+    // พรีวิวด้วยเสียงอ่านของเบราว์เซอร์: เวลาวิ่งตามการพูดจริง
+    const N = NARRATORS[this.opt.narrator], chunks=this.tl.chunks; let vt = 0, mark = performance.now(), speaking=-1;
+    const clock = () => { const el=(performance.now()-mark)/1000; if (speaking>=0) return Math.min(chunks[speaking].start+el, chunks[speaking].showEnd-0.02); return vt+el; };
+    const say = i => { if (!this.playing) return; if (i>=chunks.length){ vt=chunks.length?chunks[chunks.length-1].end:0; mark=performance.now(); speaking=-1; return; }
+      const c=chunks[i], u=new SpeechSynthesisUtterance(speakable(c.text)); u.lang="th-TH"; u.voice=voices[0];
+      const sp = {slow:0.92,normal:1,fast:1.1}[this.opt.speed];
+      u.rate = N.rate*sp*({"กระซิบ":0.9,"ช้าลง":0.85,"ตื่นเต้น":1.1,"ขำ":1.05}[c.emotion]||1); u.pitch=N.pitch*(c.speaker ? [1.18,0.82,1.32,0.92][[...new Set(chunks.filter(x=>x.speaker).map(x=>x.speaker))].indexOf(c.speaker)%4] : 1); u.volume = c.emotion==="กระซิบ"?0.75:1;
+      u.onstart = ()=>{ speaking=i; mark=performance.now(); };
+      u.onend = ()=>{ speaking=-1; vt=c.end; mark=performance.now(); setTimeout(()=>say(i+1), PAUSE[c.pause]*(PAUSE_SCALE[this.opt.speed]??1)*1000); };
+      window.speechSynthesis.speak(u); };
+    vt = 0; mark = performance.now(); setTimeout(()=>say(0), 400);
+    this.loop(clock);
+  }
+  /* เสียงอ่านของ Claude (บน claude.ai เมื่อเบราว์เซอร์ไม่มีเสียงไทย): อ่านทุกท่อนต่อกันเป็นหนึ่งรอบ ซับเดินตามท่อนที่กำลังอ่าน */
+  playTts(){
+    const t = RT.tts, chunks = this.tl.chunks, N = NARRATORS[this.opt.narrator], sp = {slow:0.92,normal:1,fast:1.1}[this.opt.speed];
+    let speaking = -1, vt = 0, mark = performance.now();
+    const clock = () => { const el=(performance.now()-mark)/1000; if (speaking>=0) return Math.min(chunks[speaking].start+el, chunks[speaking].showEnd-0.02); return vt+el; };
+    const offs = [
+      t.onLine(({id}) => { const i = Number(id); if (Number.isInteger(i) && chunks[i]){ speaking = i; mark = performance.now(); } }),
+      t.onState(({state: st, reason}) => { if (st === "idle"){ speaking = -1; vt = chunks.length ? chunks[chunks.length-1].end : 0; mark = performance.now();
+        if (reason && !["completed","stopped","replaced"].includes(reason)) status(ttsMessage(reason)); } }),
+    ];
+    this.ttsOff = () => offs.forEach(f => { try { f(); } catch {} });
+    const lines = chunks.slice(0, 100).map((c,i) => ({text: speakable(c.text) || "...", id: String(i)}));
+    if (lines.length) t.speak(lines, {language: "th", rate: Math.min(1.5, Math.max(0.7, N.rate*sp))})
+      .catch(e => { if (e?.code !== "stopped"){ status(ttsMessage(e?.code)); if (e?.code === "not_granted") RT.tts = null; } });
+    status("พรีวิวด้วยเสียงอ่านของ Claude");
+    this.loop(clock);
+  }
+  srt(){ return download(`clip${this.i+1}.srt`, new Blob([toSrt(this.tl.chunks)],{type:"text/plain"}))
+    .then(ok => { if (ok) status(RT.viewer ? `บันทึกซับคลิป ${this.i+1} แล้ว (ลบ .txt ท้ายชื่อไฟล์ให้เหลือ .srt ก่อนอัปโหลด)` : `บันทึกซับคลิป ${this.i+1} แล้ว`); return ok; }); }
+  async exportBoth(){ const f=this.fmt; await this.export("9x16"); await this.export("16x9"); this.setFmt(f); }
+  export(fmt){
+    if (typeof fmt === "string" && fmt!==this.fmt) this.setFmt(fmt);
+    return new Promise(res=>{
+      state.clips.forEach(c=>c.stop()); this.stop();
+      const ac=audio(), dest=ac.createMediaStreamDestination();
+      const stream = new MediaStream([...this.cv.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
+      const mime = ["video/mp4;codecs=avc1.640028,mp4a.40.2","video/mp4","video/webm;codecs=vp9,opus","video/webm"].find(m=>window.MediaRecorder && MediaRecorder.isTypeSupported(m));
+      if (!mime){ status("เบราว์เซอร์นี้บันทึกวิดีโอไม่ได้ ใช้ Chrome/Edge หรือดาวน์โหลด project.json ไปเรนเดอร์ด้วย render.py"); return res(); }
+      const rec = new MediaRecorder(stream, {mimeType:mime, videoBitsPerSecond:8e6}), parts=[];
+      rec.ondataavailable = e=>e.data.size && parts.push(e.data);
+      rec.onstop = async ()=>{ const ext = mime.startsWith("video/mp4")?"mp4":"webm";
+        const ok = await download(`clip${this.i+1}_${this.fmt}.${ext}`, new Blob(parts,{type:mime.split(";")[0]}));
+        if (ok) status(`บันทึกคลิป ${this.i+1} (${this.fmt.replace("x",":")}) เสร็จแล้ว`); res(); };
+      this.playing=true; this.aud=this.startAudio(dest); const {t0}=this.aud;
+      status(`กำลังบันทึกคลิป ${this.i+1} (${this.fmt.replace("x",":")}) แบบเรียลไทม์ ${this.tl.total.toFixed(0)} วินาที เปิดแท็บนี้ค้างไว้`+(this.voice ? "" : RT.viewer ? " · ยังไม่มีเสียงพากย์: ใส่ไฟล์เสียงด้วยปุ่ม 📁 ก่อนถ้าต้องการเสียงพูดในไฟล์" : " · ยังไม่มีเสียงพากย์: กด 🎙 อัดเสียงก่อนถ้าต้องการเสียงพูดในไฟล์"));
+      rec.start(500);
+      this.loop(()=>ac.currentTime-t0, ()=>{ setTimeout(()=>{ rec.stop(); this.stop(); }, 300); }, true);
+    });
+  }
+  /* ---- อัดเสียง/ซิงก์ ---- */
+  async rec(){
+    let stream; try{ stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}); }catch(e){ status("ไม่ได้รับสิทธิ์ใช้ไมโครโฟน"); return; }
+    const mime = ["audio/webm;codecs=opus","audio/mp4","audio/webm"].find(m=>MediaRecorder.isTypeSupported(m)) || "";
+    const mr = new MediaRecorder(stream, mime?{mimeType:mime}:{}), parts=[]; mr.ondataavailable=e=>e.data.size&&parts.push(e.data);
+    syncSession(this, "อัดเสียง: อ่านท่อนที่แสดง แล้วกด Space เมื่อเริ่มท่อนถัดไป เว้นจังหวะตามเครื่องหมาย / // ///",
+      ()=>{ mr.start(); return performance.now(); },
+      ok=>{ mr.onstop = async ()=>{ stream.getTracks().forEach(t=>t.stop()); if(!ok) return;
+          const blob=new Blob(parts,{type:mr.mimeType}); const f=new File([blob], `clip${this.i+1}-voice.${mr.mimeType.includes("mp4")?"m4a":"webm"}`, {type:mr.mimeType});
+          const tm=this.timings; await this.loadVoice(f); this.timings=tm; this.retime(); this.refresh(); download(f.name, blob);
+          status(`อัดเสียงคลิป ${this.i+1} เสร็จ ซับซิงก์กับเสียงแล้ว (ไฟล์เสียงถูกดาวน์โหลดไว้ใช้กับ render.py ด้วย)`); }; mr.stop(); });
+  }
+  tapSync(){
+    if (!this.voice) return; const ac=audio(); ac.resume(); let src;
+    syncSession(this, "ฟังเสียงพากย์ แล้วกด Space ทุกครั้งที่ท่อนใหม่เริ่มพูด",
+      ()=>{ src=ac.createBufferSource(); src.buffer=this.voice; src.connect(ac.destination); src.start(); return performance.now(); },
+      ok=>{ try{src.stop()}catch{} if (ok){ this.retime(); this.refresh(); status(`ซิงก์ซับคลิป ${this.i+1} กับเสียงจริงแล้ว`); } });
+  }
+}
+function syncSession(clip, title, begin, finish){
+  state.clips.forEach(c=>c.stop());
+  const chunks = timeline(clip.script, clip.opt.speed).chunks, starts=[]; let i=-1;
+  const box=$("sync"), show=()=>{ $("syncNow").textContent = i<0 ? "กด Space หรือปุ่มด้านล่าง เมื่อเริ่มพูดท่อนแรก" : chunks[i].text.replace(/\*/g,"");
+    $("syncNext").textContent = chunks[i+1] ? "ถัดไป: "+chunks[i+1].text.replace(/\*/g,"")+"  "+(chunks[i]?.pause||"") : "ท่อนสุดท้าย กด เสร็จ เมื่อพูดจบ"; };
+  $("syncTitle").textContent = `คลิป ${clip.i+1} · ${title}`; box.classList.add("on");
+  const t0 = begin(); show();
+  const tap = ()=>{ if (i+1>=chunks.length) return; i++; starts[i]={start:(performance.now()-t0)/1000}; show(); };
+  const end = ok=>{ box.classList.remove("on"); document.removeEventListener("keydown", key); $("syncTap").onclick=$("syncDone").onclick=$("syncCancel").onclick=null;
+    if (ok && starts.length){ for (let k=starts.length;k<chunks.length;k++) starts[k]=null; clip.timings = starts; } finish(ok); };
+  const key = e=>{ if (e.code==="Space"){ e.preventDefault(); tap(); } else if (e.code==="Escape") end(false); };
+  document.addEventListener("keydown", key);
+  $("syncTap").onclick=tap; $("syncDone").onclick=()=>end(true); $("syncCancel").onclick=()=>end(false);
+}
+
+/* ================= UI หลัก ================= */
+function status(s){ $("status").textContent=s; }
+function ttsMessage(code){
+  return ({not_granted:"ปิดเสียงอ่านของ Claude ไว้สำหรับหน้านี้", rate_limited:"อ่านออกเสียงถี่เกินไป รอสักครู่แล้วกดเล่นใหม่", no_gesture:"กดปุ่ม ▶ อีกครั้งเพื่อเริ่มเสียงอ่าน",
+    busy:"รอให้การพูด/ถามตอบอื่นจบก่อน แล้วกดเล่นใหม่", viewer_stopped:"หยุดเสียงอ่านแล้ว", hidden:"หยุดเสียงอ่านเพราะสลับหน้า", interrupted:"เสียงอ่านถูกขัดจังหวะ",
+    unavailable:"เสียงอ่านของ Claude ใช้ไม่ได้ตอนนี้"})[code] || "เสียงอ่านขัดข้อง แสดงซับอย่างเดียว";
+}
+/* บันทึกไฟล์: บน claude.ai ผ่านหน้าต่างยืนยันของ downloads (.srt ไม่อยู่ในรายการที่อนุญาต จึงบันทึกเป็น .srt.txt) ในเครื่องใช้ลิงก์ดาวน์โหลดปกติ */
+async function download(name, blob){
+  if (RT.viewer){
+    await RT.ready;
+    if (!RT.downloads){ status("หน้านี้บันทึกไฟล์ลงเครื่องไม่ได้ เปิดไฟล์ index.html ในเครื่องแทน"); return false; }
+    const filename = /\.srt$/i.test(name) ? name + ".txt" : name;
+    try { await RT.downloads.save({filename, data: blob}); return true; }
+    catch (e){ status(({declined:"ยกเลิกการบันทึกไฟล์แล้ว", rate_limited:"มีหน้าต่างบันทึกไฟล์ค้างอยู่ ตอบหน้าต่างนั้นก่อนแล้วลองใหม่",
+      too_large:"ไฟล์ใหญ่เกินกว่าที่ปลายทางรับได้", rejected_extension:"ไฟล์ชนิดนี้บันทึกจากหน้านี้ไม่ได้", extension_not_enabled:"ไฟล์ชนิดนี้บันทึกจากหน้านี้ไม่ได้"})[e?.code]
+      || "บันทึกไฟล์ไม่สำเร็จ"); return false; }
+  }
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  return true;
+}
+const FIELDS = ["topic","timeline","hero","side","place","series","message","count","length","visual","narrator","format","caption","music","speed","sfx","banner","engine","model"];
+function readOpt(){
+  const v = id => $(id).value;
+  return {brief:{topic:v("topic").trim(), timeline:v("timeline").trim(), hero:v("hero").trim(), side:v("side").trim(), place:v("place").trim(), message:v("message").trim()},
+    series:v("series").trim(), count:+v("count"), len:+v("length"), visual:v("visual"), narrator:v("narrator"), format:v("format"), caption:v("caption"), music:v("music"), speed:v("speed"),
+    sfx:v("sfx")==="on", banner:v("banner")==="on", engine:v("engine"), model:v("model"), key:v("apikey").trim()};
+}
+function clipMeta(opt, i, n){
+  if (opt.narrator === "doc") return docMeta(opt.brief, i, n);
+  return {title:`${cleanTopic(opt.brief.topic)} ตอนที่ ${i+1}`, angle:ANGLES[i]};
+}
+async function generate(auto = false){
+  const opt = readOpt();
+  if (auto) opt.engine = "local"; // ตัวอย่างตอนเปิดหน้าใช้เทมเพลตในเครื่องเสมอ ไม่ใช้โควตา Claude
+  if (!opt.brief.topic){ status("กรอกเรื่องหรือหัวข้อก่อนนะ"); $("topic").focus(); return; }
+  if (!auto){ $("exampleNote").hidden = true; try { localStorage.setItem("vstudio2", JSON.stringify(Object.fromEntries(FIELDS.map(f=>[f,$(f).value])))); } catch {} }
+  state.clips.forEach(c=>c.stop()); $("go").disabled=true;
+  let data;
+  try {
+    if (opt.engine==="claude"){
+      if (!RT.viewer && !opt.key) throw new Error("ใส่ Anthropic API key ก่อน หรือเปลี่ยนเป็นเทมเพลตในเครื่อง");
+      if (!RT.viewer) status(`กำลังให้ Claude เขียนสคริปต์ ${opt.count} คลิป...`);
+      data = await claudeScripts(opt.brief, opt);
+    } else {
+      data = Array.from({length:opt.count}, (_,i)=>({...clipMeta(opt,i,opt.count), script:localScript(opt.brief, opt.narrator, i, opt.len, i, opt.count, opt.speed)}));
+      if (opt.narrator==="doc" && !opt.brief.timeline) status("ยังไม่มีไทม์ไลน์ ใช้โครงเรื่องทั่วไปให้ก่อน ใส่ไทม์ไลน์หรือใช้ Claude API เพื่อให้ได้เนื้อหาจริง");
+    }
+  } catch(e){ status("สร้างไม่สำเร็จ: "+e.message); $("go").disabled=false; return; }
+  state.opt = opt; const box=$("clips"); box.innerHTML="";
+  state.clips = data.map((d,i)=>{ const c=new Clip(i, data.length, {title:d.title||clipMeta(opt,i,data.length).title, angle:d.angle||clipMeta(opt,i,data.length).angle, script:d.script}, opt); box.appendChild(c.el); return c; });
+  $("bulk").hidden=false; $("go").disabled=false;
+  if (auto) status(`ตัวอย่าง ${data.length} คลิปพร้อมแล้ว กด ▶ เล่นพรีวิว หรือแก้ข้อมูลทางซ้ายแล้วกด "สร้างคลิป"`);
+  else if (!(opt.narrator==="doc" && !opt.brief.timeline && opt.engine!=="claude")) status(`สร้าง ${data.length} คลิปแล้ว กด ▶ เพื่อพรีวิว แก้สคริปต์ได้ในกล่องข้อความ`);
+}
+$("go").addEventListener("click", () => generate());
+$("dlProject").onclick = ()=>{
+  const o=state.opt; const fm = o.format==="both"?["9x16","16x9"]:[o.format];
+  const project = {title:cleanTopic(o.brief.topic), series:o.series||cleanTopic(o.brief.topic), brief:o.brief, visualStyle:o.visual, narratorStyle:o.narrator, captionMode:captionMode(o), banner:o.banner,
+    formats:fm, music:o.music, speed:o.speed, clipCount:state.clips.length,
+    clips: state.clips.map(c=>({title:c.title, angle:c.angle, script:c.script, voice:c.voiceBlob?c.voiceBlob.name:null,
+      timings:c.timings ? c.timings.map(x=>x?{start:+x.start.toFixed(3)}:null) : null,
+      scenes:c.tl.scenes.map((s,j)=>({desc:s.desc, prompt:`${s.desc}. ${VISUALS[o.visual].prompt}`, media:c.media[j]?.dataset?.name||null, motion:["zoom-in","pan-right","zoom-out","pan-left"][j%4]}))}))};
+  download("project.json", new Blob([JSON.stringify(project,null,2)],{type:"application/json"}))
+    .then(ok => ok && status("ได้ project.json แล้ว วางไฟล์เสียงหรือรูปที่ระบุไว้ในโฟลเดอร์เดียวกัน แล้วรัน: python3 render.py project.json --out out/"));
+};
+$("dlAllSrt").onclick = async ()=>{ for (const c of state.clips){ if (!(await c.srt())) break; } };
+$("dlAllScripts").onclick = ()=>download("scripts.txt", new Blob([state.clips.map(c=>`### คลิป ${c.i+1}: ${c.title} (${c.angle})\n${c.script}\n`).join("\n")],{type:"text/plain"}))
+  .then(ok => ok && status("บันทึกสคริปต์ทุกคลิปแล้ว"));
+/* ================= ให้ Agent คิดเรื่องทั้งหมด (ผู้ใช้เลือกแค่แนวคลิป + จำนวน) ================= */
+const GENRES = {
+  "ประวัติศาสตร์":          {visual:"cinematic", narrator:"doc", music:"doc", real:true},
+  "สารคดี Cinematic":       {visual:"cinematic", narrator:"doc", music:"doc", real:true},
+  "เรื่องราวบุคคลสำคัญ":     {visual:"collage", narrator:"doc", music:"doc", real:true},
+  "ข่าวกระแสสังคม":         {visual:"collage", narrator:"doc", music:"doc", news:true},
+  "เล่าเรื่องละมุน":         {visual:"pastel3d", narrator:"lamun", music:"musicbox"},
+  "นิทานเด็ก (ครูหน่อง)":    {visual:"watercolor", narrator:"kru-nong", music:"musicbox"},
+  "แบบเรียนไทย (มานะ)":      {visual:"papercut", narrator:"mana", music:"playful"},
+  "เรื่องลึกลับนุ่ม ๆ":       {visual:"neon-night", narrator:"mystery", music:"dream"},
+  "เรื่องขำอบอุ่น":           {visual:"kinetic", narrator:"funny", music:"playful"},
+};
+/* เรื่องแต่งสำรองเมื่อยังไม่มี Claude (ใช้กับแนวเรื่องแต่งเท่านั้น ไม่แต่งเรื่องจริง) */
+const LOCAL_IDEAS = {
+  "เล่าเรื่องละมุน": [
+    {topic:"ร้านขนมปังที่เปิดเฉพาะวันฝนตก (เรื่องสมมติ)", hero:"", side:"ลุงเจ้าของร้าน", place:"ซอยเล็กริมคลอง", series:"เรื่องเล่าก่อนนอน", message:"ความอบอุ่นมักมาในวันที่ฟ้าครึ้ม"},
+    {topic:"ไปรษณีย์ที่ส่งจดหมายถึงตัวเองในอีกสิบปี (เรื่องสมมติ)", hero:"", side:"บุรุษไปรษณีย์คนสุดท้าย", place:"เมืองเล็กบนเขา", series:"เรื่องเล่าก่อนนอน", message:"วันนี้คือจดหมายที่อนาคตรออ่าน"},
+    {topic:"ตลาดน้ำที่ขายความทรงจำ (เรื่องสมมติ)", hero:"", side:"ยายแม่ค้าเรือพาย", place:"คลองเก่าชานเมือง", series:"เรื่องเล่าก่อนนอน", message:"บางอย่างซื้อไม่ได้ แต่แบ่งกันได้"}],
+  "นิทานเด็ก (ครูหน่อง)": [
+    {topic:"เต่าน้อยที่อยากวิ่งให้เร็ว (เรื่องสมมติ)", hero:"เต่าน้อยต้นข้าว", side:"คุณยายนกฮูก", place:"ป่าริมบึง", series:"นิทานครูใจดี", message:"ค่อย ๆ ทำ ทีละนิด ก็สำเร็จได้"},
+    {topic:"ช้างน้อยที่กลัวน้ำ (เรื่องสมมติ)", hero:"ช้างน้อยพลอย", side:"ปลาตะเพียนทอง", place:"ลำธารในป่า", series:"นิทานครูใจดี", message:"ความกล้าเริ่มจากก้าวเล็ก ๆ"}],
+  "แบบเรียนไทย (มานะ)": [
+    {topic:"ว่าวตัวแรกของหมู่บ้าน (เรื่องสมมติ)", hero:"มานะ", side:"น้องแก้ว", place:"ทุ่งนาหลังบ้าน", series:"เรื่องเล่าวัยเด็ก", message:"ช่วยกันทำ งานยากก็สำเร็จ"},
+    {topic:"ต้นมะม่วงที่ไม่ยอมออกผล (เรื่องสมมติ)", hero:"มานะ", side:"ปู่", place:"บ้านไม้ชนบท", series:"เรื่องเล่าวัยเด็ก", message:"รอได้ก็ได้ผลดี"}],
+  "เรื่องลึกลับนุ่ม ๆ": [
+    {topic:"สถานีรถไฟที่มีขบวนเดียวตอนตีสาม (เรื่องสมมติ)", hero:"", side:"นายสถานีไม่มีชื่อ", place:"สถานีร้างชายแดน", series:"เรื่องเล่าหลังเที่ยงคืน", message:"บางทางมีไว้ให้ผ่าน ไม่ได้มีไว้ให้หยุด"},
+    {topic:"ร้านซ่อมนาฬิกาที่เวลาเดินถอยหลัง (เรื่องสมมติ)", hero:"", side:"ช่างนาฬิกาตาเดียว", place:"ตรอกเก่าในเยาวราช", series:"เรื่องเล่าหลังเที่ยงคืน", message:"เวลาที่ผ่านไปแล้ว ยังสอนเราได้เสมอ"}],
+  "เรื่องขำอบอุ่น": [
+    {topic:"แมวที่คิดว่าตัวเองเป็นหัวหน้าหมู่บ้าน (เรื่องสมมติ)", hero:"เจ้าส้ม", side:"ป้าร้านชำ", place:"หมู่บ้านริมทุ่ง", series:"เรื่องขำก่อนนอน", message:"ความมั่นใจเป็นเรื่องดี ถ้าแบ่งปลาทูให้คนอื่นด้วย"},
+    {topic:"ไก่ชนที่กลัวเสียงไก่ขัน (เรื่องสมมติ)", hero:"ไอ้หงอน", side:"ลุงเจ้าของไก่", place:"สนามหลังวัด", series:"เรื่องขำก่อนนอน", message:"ทุกคนกลัวอะไรสักอย่าง ไม่เห็นต้องอาย"}],
+};
+$("agentGenre").innerHTML = Object.keys(GENRES).map(g=>`<option>${g}</option>`).join("");
+function agentNote(html){ $("agentNote").innerHTML = html; }
+const escHtml = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+function briefSummary(){ const t = $("topic").value.trim(); $("briefSummary").textContent = t ? `รายละเอียดเรื่อง: ${t} (แก้ได้)` : "รายละเอียดเรื่อง (Agent กรอกให้ หรือแก้เองได้)"; }
+$("topic").addEventListener("input", briefSummary);
+function fillBrief(x){
+  $("topic").value = x.topic || ""; $("timeline").value = Array.isArray(x.timeline) ? x.timeline.join("\n") : (x.timeline || "");
+  ["hero","side","place","series","message"].forEach(k=>{ $(k).value = x[k] || ""; });
+  $("exampleNote").hidden = true; briefSummary();
+}
+function ideaPrompt(genre, n, len, G){
+  return `คุณคือทีมครีเอทีฟ (วิจัยหัวข้อ + เขียนบท) ของช่องคลิปเล่าเรื่องภาษาไทย ให้คิดเรื่องใหม่ 1 เรื่องสำหรับคลิปแนว "${genre}" ที่จะเล่าเป็นชุด ${n} คลิป (คลิปละ ~${len} วินาที มุมเล่าต่างกัน)
+- เลือกเรื่องที่คนไทยสนใจ มีจุดพลิก มีอารมณ์ เล่าให้ติดตามได้
+- ${G.real ? "ต้องเป็นเรื่องจริง ใช้เฉพาะข้อเท็จจริงที่มั่นใจและตรวจสอบได้ ห้ามแต่งตัวเลข ปี ชื่อ หรือเหตุการณ์ ไทม์ไลน์ใส่ปีจริง (พ.ศ. หรือ ค.ศ. ให้ระบุ)" : "เป็นเรื่องแต่งทั้งหมด ตั้งชื่อตัวละครใหม่ ห้ามใช้ชื่อหรือเรื่องของคนจริง ใส่ (เรื่องสมมติ) ท้ายหัวข้อ"}
+- หลีกเลี่ยงเรื่องการเมือง สถาบันพระมหากษัตริย์ คดีที่ยังไม่ตัดสิน ความรุนแรง และข้อมูลส่วนตัวของคนทั่วไป
+- timeline 5–8 บรรทัด รูปแบบ "ปีหรือช่วงเวลา | หัวข้อสั้น 2–4 คำ | เล่าเหตุการณ์ เว้นวรรคระหว่างคำ" (เรื่องแต่งใช้ช่วงเวลาเช่น "วันแรก" "ปีที่ 3")
+ตอบเป็น JSON อย่างเดียว: {"topic":"...","timeline":["...","..."],"hero":"ชื่อตัวเอก","side":"ตัวละครรอง","place":"ฉาก/สถานที่","series":"ชื่อซีรีส์สั้น ๆ","message":"ข้อคิด 1 ประโยค","why":"ทำไมเรื่องนี้น่าทำตอนนี้ 1 ประโยค","sources":["แหล่งที่ใช้ตรวจสอบได้ (เฉพาะเรื่องจริง)"]}`;
+}
+async function claudeJSON(prompt){
+  if (RT.viewer){
+    await RT.ready; if (!RT.sample) throw new Error("หน้านี้ใช้ Claude ไม่ได้");
+    return await RT.sample.json(prompt, {cache:false, onText:({text})=>status(`Agent กำลังคิดเรื่อง... ${text.length.toLocaleString("th-TH")} ตัวอักษร`)});
+  }
+  const key = $("apikey").value.trim(); if (!key) throw new Error("ไม่มี API key");
+  const r = await fetch("https://api.anthropic.com/v1/messages", {method:"POST",
+    headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body: JSON.stringify({model:$("model").value, max_tokens:4000, messages:[{role:"user", content:prompt}]})});
+  if (!r.ok) throw new Error(`Claude API ${r.status}`);
+  const text = (await r.json()).content.filter(c=>c.type==="text").map(c=>c.text).join("");
+  return JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}")+1));
+}
+async function agentCreate(){
+  const genre = $("agentGenre").value, n = $("agentCount").value, G = GENRES[genre];
+  if (G.news){
+    const cmd = `ผลิตคลิป${genre} ${n} คลิป`;
+    agentNote(`ข่าวกระแสต้องค้นข่าววันนี้และตรวจแหล่งข่าวจริง หน้าเว็บนี้ค้นเว็บไม่ได้ จึงให้ทีม Agent ใน Claude Code ทำ (วิจัยกระแส → บท → ภาพ → เสียง → ตัดต่อ → QC → ส่งอนุมัติ)<br>
+      <span class="agent-cmd"><code id="agentCmd">${escHtml(cmd)}</code><button type="button" id="agentCopy">คัดลอกคำสั่ง</button></span>`);
+    $("agentCopy").onclick = async ()=>{ try{ await navigator.clipboard.writeText(cmd); $("agentCopy").textContent="คัดลอกแล้ว"; }catch{ const r=document.createRange(); r.selectNodeContents($("agentCmd")); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(r); } };
+    return;
+  }
+  $("visual").value = G.visual; $("narrator").value = G.narrator; $("music").value = G.music; $("speed").value = NARRATORS[G.narrator].speed; $("count").value = n;
+  if (G.visual === "collage" || G.narrator === "doc") $("banner").value = "on";
+  await RT.ready;
+  const claudeOk = RT.viewer ? !!RT.sample : !!$("apikey").value.trim();
+  if (!claudeOk){
+    if (G.real){
+      agentNote(`เรื่องจริง (${escHtml(genre)}) ต้องให้ Claude คิดจากข้อเท็จจริง: เปิดหน้านี้บน claude.ai หรือเลือกผู้เขียนสคริปต์ = Claude แล้วใส่ API key หรือสั่งทีมใน Claude Code ว่า <code>ผลิตคลิป${escHtml(genre)} ${escHtml(n)} คลิป</code>`);
+      $("engine").value = "claude"; $("claudeBox").hidden = RT.viewer; return;
+    }
+    const pool = LOCAL_IDEAS[genre] || LOCAL_IDEAS["เล่าเรื่องละมุน"], cur = $("topic").value;
+    const pick = pool.filter(x=>x.topic!==cur)[Math.floor(Math.random()*Math.max(1,pool.length-1))] || pool[0];
+    fillBrief(pick); $("engine").value = "local";
+    agentNote(`Agent (โหมดออฟไลน์) เลือกเรื่องแต่ง: <b>${escHtml(pick.topic)}</b> · กดอีกครั้งเพื่อสุ่มเรื่องใหม่ · ต่อ Claude เพื่อให้คิดเรื่องใหม่ทุกครั้ง`);
+    return generate();
+  }
+  $("agentGo").disabled = true; agentNote("Agent กำลังคิดเรื่อง เลือกตัวละคร และวางไทม์ไลน์...");
+  try{
+    const idea = await claudeJSON(ideaPrompt(genre, n, +$("length").value, G));
+    if (!idea || !idea.topic) throw new Error("Agent ไม่ได้ส่งเรื่องกลับมา");
+    fillBrief(idea); $("engine").value = "claude";
+    agentNote(`Agent คิดเรื่อง: <b>${escHtml(idea.topic)}</b>${idea.why ? " · "+escHtml(idea.why) : ""}` +
+      (G.real ? `<br>เรื่องจริง: ตรวจข้อเท็จจริงก่อนเผยแพร่${(idea.sources||[]).length ? " (แหล่ง: "+idea.sources.map(escHtml).join(", ")+")" : ""}` : "") + " · ดู/แก้ได้ใน \"รายละเอียดเรื่อง\"");
+    await generate();
+  }catch(e){ agentNote("Agent คิดเรื่องไม่สำเร็จ: " + escHtml(e.message || (e && e.code) || e) + " ลองกดอีกครั้ง"); status(""); }
+  finally{ $("agentGo").disabled = false; }
+}
+$("agentGo").addEventListener("click", agentCreate);
+
+/* เปิดหน้า: คืนค่าที่เคยกรอก หรือใส่เรื่องตัวอย่าง (เรื่องสมมติ) แล้วสร้างตัวอย่างให้เห็นทันที */
+const EXAMPLE = {topic:"ต้นกล้า นักวิ่งจากหมู่บ้านริมโขง (เรื่องสมมติ)", hero:"ต้นกล้า", side:"", place:"หมู่บ้านริมโขง", series:"ตำนานคนสู้ชีวิต",
+  message:"ถ้าเคยมีใครบอกว่าคุณทำไม่ได้ เรื่องนี้คือคำตอบ",
+  timeline:"2008 | เท้าเปล่า 10 กิโล | วิ่ง เท้า เปล่า ไป โรงเรียน วัน ละ 10 กิโล\n2012 | ไม่มีใครเลือก | ไป คัด ตัว ทีม จังหวัด แต่ ไม่ มี ใคร เลือก\n2015 | เข่าพัง | หมอ บอก ว่า ห้าม วิ่ง ตลอด ชีวิต\n2018 | วันละกิโล | เริ่ม จาก เดิน วัน ละ 1 กิโล ทุก เช้า\n2023 | เหรียญทองแรก | เข้า เส้นชัย เป็น คน แรก ของ ประเทศ"};
+let restored = false;
+try { const saved = JSON.parse(localStorage.getItem("vstudio2") || "null"); if (saved && saved.topic){ FIELDS.forEach(f=>{ if (saved[f]!=null) $(f).value = saved[f]; }); restored = true; } } catch {}
+if (!restored){ Object.entries(EXAMPLE).forEach(([k,v]) => { $(k).value = v; }); $("exampleNote").hidden = false; }
+$("claudeBox").hidden = $("engine").value !== "claude" || RT.viewer;
+applyRuntimeUI();
+briefSummary();
+generate(true);
+window.speechSynthesis?.getVoices?.();
+document.fonts?.ready.then(()=>state.clips.forEach(c=>c.refresh()));
+</script>
+</body>
+</html>

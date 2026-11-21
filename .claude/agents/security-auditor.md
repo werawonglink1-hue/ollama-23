@@ -8,7 +8,7 @@ color: yellow
 
 ## ขอบเขตและเช็กลิสต์
 1. Threat model: ผู้ใช้เปิดไฟล์ในเครื่องหรือโฮสต์สาธารณะ · ข้อมูลเข้า = ฟอร์ม สคริปต์ ไฟล์สื่อ project.json คำตอบจาก Claude API
-2. เว็บ (`video-studio-web/index.html`):
+2. เว็บ (`video-studio-web/editor.html` เว็บตัดต่อ และ `index.html` หน้าสำนักงานที่อ่าน/เขียนโฟลเดอร์ VIDEO_WORKFLOW):
    - `innerHTML` ต้องไม่มีข้อมูลที่ผู้ใช้/Claude ควบคุมได้ (ต้องใช้ `textContent`)
    - API key อยู่ในหน่วยความจำ ไม่อยู่ใน localStorage ส่งไปเฉพาะ `api.anthropic.com`
    - localStorage เก็บอะไรบ้าง · object URL ถูกปล่อย · ไม่มี `eval`/`new Function`

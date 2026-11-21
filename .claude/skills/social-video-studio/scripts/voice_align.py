@@ -65,6 +65,18 @@ def tts_text(chunks) -> str:
 
 def cmd_prepare(a):
     scenes, chunks = bs.parse_script(open(a.script, encoding="utf-8").read())
+    if a.cast:  # หลายเสียง: หนึ่งคำขอต่อช่วงผู้พูด
+        p = json.load(open(a.cast, encoding="utf-8"))
+        clip = p["clips"][a.clip - 1] if "clips" in p else {}
+        cast = {**(p.get("cast") or {}), **(clip.get("cast") or {})}
+        parts, missing = voice_parts(chunks, cast, p.get("narratorStyle", a.narrator), p.get("speed", a.speed), a.clip)
+        json.dump({"parts": parts, "missingCast": missing,
+                   "after": "whisper_words.py ทีละไฟล์ (<target>-words.json) แล้ว voice_align.py assemble-cast"},
+                  sys.stdout, ensure_ascii=False, indent=1)
+        print()
+        if missing:
+            print(f"⚠ ยังไม่ได้แคสต์เสียงให้: {', '.join(missing)} (ใส่ใน cast ของ project.json)", file=sys.stderr)
+        return 0
     text = tts_text(chunks)
     params = {"model": "qwen_audio_tts", "prompt": text, "language": "th",
               "instruction": INSTRUCTIONS.get(a.narrator, INSTRUCTIONS["doc"])[:128],
@@ -227,22 +239,16 @@ def fade(seg, n):
     return seg
 
 
-def cmd_assemble(a):
-    sr = 44100
-    scenes, chunks = bs.parse_script(open(a.script, encoding="utf-8").read())
-    spans = align(chunks, load_words(a.words))
-    audio = read_audio(a.voice, sr)
+def pace_part(chunks, idxs, spans, audio, sr, pscale, out, timings, last_part=True):
+    """ต่อเสียงของชุดท่อน idxs (ดัชนีในสคริปต์ทั้งเรื่อง; spans = เวลาในไฟล์เสียงของชุดนี้) ลง out
+    ตัดเฉพาะตรง // และ /// (ตรง / ปล่อยให้พูดต่อเนื่องเป็นธรรมชาติ) แล้วใส่ความเงียบตามสคริปต์ คืนจำนวนกลุ่ม"""
     dur = len(audio) / sr
-    pscale = bs.PAUSE_SCALE.get(a.speed, 1.0)
-    # กลุ่มเสียงต่อเนื่อง: ตัดเฉพาะตรง // และ /// (ตรง / ปล่อยให้พูดต่อเนื่องเป็นธรรมชาติ)
     groups, cur = [], []
-    for i, c in enumerate(chunks):
-        cur.append(i)
-        if len(c.pause) >= 2 or i == len(chunks) - 1:
+    for k, i in enumerate(idxs):
+        cur.append(k)
+        if len(chunks[i].pause) >= 2 or k == len(idxs) - 1:
             groups.append(cur)
             cur = []
-    out = array.array("h", [0] * int(a.lead * sr))
-    timings = [None] * len(chunks)
     for gi, g in enumerate(groups):
         g0 = max(0.0, spans[g[0]][0] - 0.06)
         g1 = min(dur, spans[g[-1]][1] + 0.12)
@@ -250,25 +256,103 @@ def cmd_assemble(a):
             g1 = min(g1, max(spans[groups[gi + 1][0]][0] - 0.03, spans[g[-1]][1]))
         seg = fade(audio[int(g0 * sr):int(g1 * sr)], int(0.012 * sr))
         offset = len(out) / sr
-        for i in g:
-            timings[i] = {"start": round(offset + spans[i][0] - g0, 3), "end": round(offset + spans[i][1] - g0, 3)}
+        for k in g:
+            timings[idxs[k]] = {"start": round(offset + spans[k][0] - g0, 3), "end": round(offset + spans[k][1] - g0, 3)}
         out.extend(seg)
-        if gi + 1 < len(groups):
-            mark = chunks[g[-1]].pause
-            out.extend([0] * int(max(0.25, bs.PAUSE[mark] * pscale) * sr))
+        if gi + 1 < len(groups) or not last_part:  # เปลี่ยนผู้พูดก็เว้นอย่างน้อย 0.25 วิ
+            out.extend([0] * int(max(0.25, bs.PAUSE[chunks[idxs[g[-1]]].pause] * pscale) * sr))
+    return len(groups)
+
+
+def _finish(a, out, timings, sr, chunks, n_groups, src_desc, extra=None):
     out.extend([0] * int(a.tail * sr))
     write_wav(a.out, out, sr)
-    _dump(timings, a.timings)
+    _dump(timings, getattr(a, "timings", None))
     total = len(out) / sr
-    print(f"✔ {a.out}  ยาว {total:.1f} วิ (เดิม {dur:.1f} วิ) · {len(chunks)} ท่อน · {len(groups)} ช่วงเว้นจังหวะ", file=sys.stderr)
+    print(f"✔ {a.out}  ยาว {total:.1f} วิ ({src_desc}) · {len(chunks)} ท่อน · {n_groups} ช่วงเว้นจังหวะ", file=sys.stderr)
     if a.project:
         p = json.load(open(a.project, encoding="utf-8"))
         clip = p["clips"][a.clip - 1]
         clip["voice"] = os.path.relpath(os.path.abspath(a.out), os.path.dirname(os.path.abspath(a.project)))
         clip["timings"] = timings
+        clip.update(extra or {})
         json.dump(p, open(a.project, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
         print(f"✔ เขียน voice + timings ลง {a.project} คลิป {a.clip}", file=sys.stderr)
     return 0
+
+
+def cmd_assemble(a):
+    sr = 44100
+    scenes, chunks = bs.parse_script(open(a.script, encoding="utf-8").read())
+    spans = align(chunks, load_words(a.words))
+    audio = read_audio(a.voice, sr)
+    pscale = bs.PAUSE_SCALE.get(a.speed, 1.0)
+    out = array.array("h", [0] * int(a.lead * sr))
+    timings = [None] * len(chunks)
+    n = pace_part(chunks, list(range(len(chunks))), spans, audio, sr, pscale, out, timings)
+    return _finish(a, out, timings, sr, chunks, n, f"เดิม {len(audio) / sr:.1f} วิ")
+
+
+# ---------------- หลายเสียง (บทพูดตัวละคร @ชื่อ:) ----------------
+NARRATOR_KEYS = ("ผู้บรรยาย", "narrator", "")
+
+
+def voice_parts(chunks, cast=None, narrator="doc", speed="normal", clip_no=1):
+    """แบ่งสคริปต์เป็นช่วงต่อเนื่องของผู้พูดคนเดียวกัน → คำขอ TTS ทีละช่วง (เสียง/คำสั่งอารมณ์ตาม cast)"""
+    cast = cast or {}
+    parts, a = [], 0
+    for i in range(1, len(chunks) + 1):
+        if i == len(chunks) or chunks[i].speaker != chunks[a].speaker:
+            who = chunks[a].speaker or "ผู้บรรยาย"
+            conf = cast.get(who) or (next((cast[k] for k in NARRATOR_KEYS if k in cast), {}) if not chunks[a].speaker else {})
+            instr = conf.get("instruction") or INSTRUCTIONS.get(narrator, INSTRUCTIONS["doc"])
+            n = len(parts) + 1
+            parts.append({"part": n, "speaker": who, "chunks": [a, i - 1],
+                          "target": f"media/clip{clip_no}-voice-p{n:02d}.wav",
+                          "params": {"model": "qwen_audio_tts", "prompt": tts_text(chunks[a:i]), "language": "th",
+                                     "instruction": instr[:128], "voice_type": "preset",
+                                     "voice_id": conf.get("voice_id") or "<เลือกจาก list_voices>",
+                                     "format": "wav", "sample_rate": 44100, "speech_rate": RATE.get(speed, 1.0)}})
+            a = i
+    missing = sorted({p["speaker"] for p in parts if p["speaker"] != "ผู้บรรยาย" and p["speaker"] not in cast})
+    return parts, missing
+
+
+def cmd_assemble_cast(a):
+    """ต่อเสียงหลายไฟล์ (หนึ่งไฟล์ต่อช่วงผู้พูด) ตามลำดับสคริปต์ + เว้นจังหวะ + timings ของทุกท่อน"""
+    sr = 44100
+    scenes, chunks = bs.parse_script(open(a.script, encoding="utf-8").read())
+    if a.parts:
+        parts = json.load(open(a.parts, encoding="utf-8"))
+        parts = parts.get("parts", parts)
+        base = os.path.dirname(os.path.abspath(a.parts))
+    else:
+        p = json.load(open(a.project, encoding="utf-8"))
+        parts = p["clips"][a.clip - 1].get("voiceParts") or []
+        base = os.path.dirname(os.path.abspath(a.project))
+    if not parts:
+        raise SystemExit("ไม่มีรายการเสียงแต่ละช่วง (voiceParts) ใช้ prepare --cast ก่อน")
+    pscale = bs.PAUSE_SCALE.get(a.speed, 1.0)
+    out = array.array("h", [0] * int(a.lead * sr))
+    timings = [None] * len(chunks)
+    covered, groups = 0, 0
+    for k, part in enumerate(parts):
+        lo, hi = part["chunks"]
+        if lo != covered or hi >= len(chunks):
+            raise SystemExit(f"ช่วงที่ {k + 1} ({lo}-{hi}) ไม่ต่อเนื่องกับสคริปต์ปัจจุบัน สคริปต์ถูกแก้หลัง prepare? ให้ prepare --cast ใหม่")
+        wav = part["target"] if os.path.isabs(part["target"]) else os.path.join(base, part["target"])
+        words = part.get("words") or os.path.splitext(wav)[0] + "-words.json"
+        words = words if os.path.isabs(words) else os.path.join(base, words)
+        if not (os.path.exists(wav) and os.path.exists(words)):
+            raise SystemExit(f"ช่วงที่ {k + 1} ({part.get('speaker')}): ไม่พบ {wav if not os.path.exists(wav) else words}")
+        idxs = list(range(lo, hi + 1))
+        spans = align([chunks[i] for i in idxs], load_words(words))
+        groups += pace_part(chunks, idxs, spans, read_audio(wav, sr), sr, pscale, out, timings, k == len(parts) - 1)
+        covered = hi + 1
+    if covered != len(chunks):
+        raise SystemExit(f"เสียงครอบคลุมแค่ {covered}/{len(chunks)} ท่อน")
+    speakers = sorted({p.get("speaker", "") for p in parts})
+    return _finish(a, out, timings, sr, chunks, groups, f"{len(parts)} ช่วง {len(speakers)} เสียง: {', '.join(speakers)}")
 
 
 def _dump(obj, path):
@@ -288,6 +372,8 @@ def main(argv=None):
     p.add_argument("--narrator", default="doc", choices=list(INSTRUCTIONS))
     p.add_argument("--speed", default="normal", choices=list(RATE))
     p.add_argument("--voice-id")
+    p.add_argument("--cast", help="project.json ที่มี cast (หลายเสียงตามบทบาท @ชื่อ:)")
+    p.add_argument("--clip", type=int, default=1)
     p = sub.add_parser("align", help="เวลาแต่ละท่อนในไฟล์เสียงเดิม")
     p.add_argument("script")
     p.add_argument("--words", required=True)
@@ -303,8 +389,21 @@ def main(argv=None):
     p.add_argument("--tail", type=float, default=1.2, help="ความเงียบท้ายคลิป (วินาที)")
     p.add_argument("--project")
     p.add_argument("--clip", type=int, default=1)
+    p = sub.add_parser("assemble-cast", help="ต่อเสียงหลายผู้พูดตามลำดับสคริปต์ + เว้นจังหวะ + timings")
+    p.add_argument("script")
+    p.add_argument("--parts", help="ผลของ prepare --cast (ไม่ใส่ = อ่าน voiceParts จาก --project)")
+    p.add_argument("--out", required=True)
+    p.add_argument("--timings")
+    p.add_argument("--speed", default="normal", choices=list(RATE))
+    p.add_argument("--lead", type=float, default=0.35)
+    p.add_argument("--tail", type=float, default=1.2)
+    p.add_argument("--project")
+    p.add_argument("--clip", type=int, default=1)
     a = ap.parse_args(argv)
-    return {"prepare": cmd_prepare, "align": cmd_align, "assemble": cmd_assemble}[a.cmd](a)
+    if a.cmd == "assemble-cast" and not (a.parts or a.project):
+        ap.error("assemble-cast ต้องใส่ --parts หรือ --project")
+    return {"prepare": cmd_prepare, "align": cmd_align, "assemble": cmd_assemble,
+            "assemble-cast": cmd_assemble_cast}[a.cmd](a)
 
 
 if __name__ == "__main__":

@@ -97,10 +97,21 @@ def wikipedia(lang, day):
         out.append({"title": title, "kind": "wiki", "source": "Wikipedia อ่านมากสุด", "traffic": 0,
                     "views": a.get("views", 0), "published": day.isoformat(), "summary": clean(a.get("extract", ""))[:240],
                     "links": [((a.get("content_urls") or {}).get("desktop") or {}).get("page", "")]})
-    for e in (data.get("onthisday") or [])[:15]:
+    today = dt.date.today()
+    events, ev_lang = [], lang
+    for ev_lang in (lang, "en"):  # วิกิพีเดียไทยมักไม่มี "วันนี้ในอดีต" ใช้ภาษาอังกฤษแทน (agent แปลเอง)
+        try:
+            events = json.loads(get(f"https://api.wikimedia.org/feed/v1/wikipedia/{ev_lang}/onthisday/selected/"
+                                    f"{today.strftime('%m')}/{today.strftime('%d')}")).get("selected") or []
+        except Exception:  # noqa: BLE001 - ไม่มีข้อมูลวันนี้ในอดีตของภาษานั้น
+            events = []
+        if events:
+            break
+    for e in events[:15]:
         pages = e.get("pages") or []
-        out.append({"title": clean(e.get("text", ""))[:160], "kind": "onthisday", "source": f"วันนี้ในอดีต ({e.get('year')})",
-                    "traffic": 0, "year": e.get("year"), "published": day.isoformat(),
+        out.append({"title": clean(e.get("text", ""))[:160], "kind": "onthisday",
+                    "source": f"วันนี้ในอดีต {e.get('year')} ({ev_lang})", "traffic": 0, "year": e.get("year"),
+                    "published": today.isoformat(),
                     "links": [((p.get("content_urls") or {}).get("desktop") or {}).get("page", "") for p in pages[:2]]})
     return out
 
@@ -164,7 +175,7 @@ def to_md(res):
              "", "| # | หัวข้อ | คะแนน | ประเภท | ยอดค้นหา/อ่าน | อายุ (ชม.) | แหล่ง | ลิงก์ |", "|---|---|---|---|---|---|---|---|"]
     for i, t in enumerate(res["topics"], 1):
         vol = f"{t['traffic']:,}+" if t["traffic"] else (f"{t['views']:,} อ่าน" if t["views"] else "-")
-        link = f"[ข่าว]({t['links'][0]})" if t["links"] else ""
+        link = f"[ลิงก์]({t['links'][0]})" if t["links"] else ""
         lines.append(f"| {i} | {t['topic'].replace('|', '/')} | {t['score']} | {','.join(t['kinds'])} | {vol} | "
                      f"{t['ageHours']} | {'; '.join(t['sources'])[:60]} | {link} |")
     lines += ["", "คะแนนเป็นจุดตั้งต้นเท่านั้น ต้องตรวจข้อเท็จจริงและความเหมาะสมกับแนวคลิปก่อนเลือก"]

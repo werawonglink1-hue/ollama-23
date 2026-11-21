@@ -8,7 +8,7 @@
   สติกเกอร์วงกลม แถบซับกระดาษฉีก ซับคำต่อคำ และทรานซิชันสไลด์ระหว่างฉาก
 - สไตล์อื่น: พื้นหลังสังเคราะห์ตาม visualStyle + Ken Burns
 - ภาพ: scenes[j].media (รูป/วิดีโอ) ไม่มีก็สร้างภาพแทนที่ให้
-- เสียง: clips[i].voice (ไฟล์พากย์ เริ่มที่วินาที 0; ทำจังหวะ/timings ด้วย voice_align.py) + project.musicFile
+- เสียง: clips[i].voice (ไฟล์พากย์ เริ่มที่วินาที 0; ทำจังหวะ/timings ด้วย voice_align.py) + project.musicFile · ปรับความดังรวม -14 LUFS (2 รอบ)
   หรือเพลงสังเคราะห์ตาม project.music + เสียงประกอบตาม {เสียง: ...} และตอนเปลี่ยนฉาก (project.sfxFiles หรือสังเคราะห์)
 - ภาพคนแบบ PNG พื้นหลังโปร่งใสในฉาก "ภาพ: วงกลม" จะกลายเป็นสติกเกอร์ขอบขาวแบบคลิปตัวอย่าง
 - ซับ: จาก script + clips[i].timings (ถ้ามี จากโหมดแตะเพื่อซิงก์) ไม่งั้นประมาณจากความเร็วอ่าน
@@ -38,9 +38,34 @@ PALETTES = {  # ท้องฟ้าบน, ล่าง, สีจุด/ว�
     "papercut":   ["#f3e9d7", "#e6d5b8", "#c2523c", "#5f7f6a", "#e9b44c", "#2f3e46"],
     "neon-night": ["#060b2e", "#16307a", "#22e3ff", "#ff4fb3", "#7b5cff", "#ffe066"],
     "film":       ["#3b2a20", "#c79a6b", "#f1d9b0", "#8a5a3c", "#e8c79c", "#fff3dc"],
+    "cinematic":  ["#0e1a24", "#3a3027", "#e0a85b", "#2f5d6b", "#c96f3b", "#f3e3c3"],
 }
 SCALE = bs.FORMATS
 VIDEO_EXT = (".mp4", ".mov", ".webm", ".mkv", ".m4v")
+
+# กล้องเคลื่อนต่อฉาก: บรรทัดฉาก "| กล้อง: ดันเข้า" (ไม่ใส่ = วนตามสไตล์ ให้แต่ละฉากต่างกัน)
+CAMERA = {"ดันเข้า": "push-in", "ซูมเข้า": "push-in", "push-in": "push-in", "zoom-in": "push-in",
+          "ถอยออก": "pull-out", "ซูมออก": "pull-out", "pull-out": "pull-out", "zoom-out": "pull-out",
+          "แพนซ้าย": "pan-left", "pan-left": "pan-left", "แพนขวา": "pan-right", "pan-right": "pan-right",
+          "เงยขึ้น": "tilt-up", "tilt-up": "tilt-up", "ก้มลง": "tilt-down", "tilt-down": "tilt-down",
+          "นิ่ง": "static", "static": "static"}
+CAMERA_CYCLE = {"cinematic": ["push-in", "pan-right", "tilt-up", "pull-out", "pan-left", "tilt-down"]}
+# ทรานซิชันเข้าฉาก: "| เปลี่ยน: ดำ" (ตามเหตุการณ์ เช่น ข้ามเวลา=ดำ, ย้อนอดีต=ขาว, ตื่นเต้น=ซูม, ที่เดิม=ละลาย)
+XFADE = {"ตัด": "cut", "cut": "cut", "จาง": "fade", "fade": "fade", "ดำ": "fadeblack", "จางดำ": "fadeblack",
+         "fadeblack": "fadeblack", "ขาว": "fadewhite", "แฟลช": "fadewhite", "fadewhite": "fadewhite",
+         "ละลาย": "dissolve", "dissolve": "dissolve", "สไลด์": "slideleft", "slideleft": "slideleft",
+         "สไลด์นุ่ม": "smoothleft", "smoothleft": "smoothleft", "ปัด": "wipeleft", "wipeleft": "wipeleft",
+         "ซูม": "zoomin", "zoomin": "zoomin", "วงกลม": "circleopen", "circleopen": "circleopen",
+         "เบลอ": "hblur", "hblur": "hblur"}
+XFADE_CYCLE = {"collage": ["slideleft"], "cinematic": ["fade", "dissolve", "smoothleft", "fadeblack", "zoomin", "fade"]}
+XFADE_LEN = {"cut": 0.0, "fadeblack": 0.7, "fadewhite": 0.5, "dissolve": 0.6, "fade": 0.5, "zoomin": 0.5}
+# โทนสี/แสงทั้งคลิป (project.grade): film = ฟิล์มอุ่น-เงาฟ้าอมเขียว คมขึ้น ขอบมืด เกรนบาง, soft = สว่างนุ่มละมุนตา
+GRADES = {"film": "eq=contrast=1.06:saturation=0.9:gamma=0.98,colorbalance=rs=-0.03:bs=0.04:rh=0.05:gh=0.01:bh=-0.05,"
+                  "unsharp=5:5:0.35:5:5:0,vignette=PI/5,noise=alls=5:allf=t",
+          "soft": "eq=contrast=0.97:brightness=0.015:saturation=0.96,colorbalance=rh=0.03:bh=-0.02,"
+                  "unsharp=5:5:0.25:5:5:0,vignette=PI/6",
+          "none": ""}
+GRADE_DEFAULT = {"cinematic": "film", "film": "film"}
 
 
 def run(cmd):
@@ -351,10 +376,28 @@ def collage_segment(tmp, idx, scene, dur, w, h, fps, clip_index, framed, media):
 
 
 # ---------- ฉากทั่วไป ----------
+def camera_of(scene, idx, style):
+    want = CAMERA.get(str((scene.meta or {}).get("camera", "")).strip().lower())
+    cycle = CAMERA_CYCLE.get(style, ["push-in", "pan-right", "pull-out", "pan-left"])
+    return want or cycle[idx % len(cycle)]
+
+
+def camera_expr(motion, frames):
+    """zoompan แบบนุ่ม (ease in-out) คืน (z, x, y)"""
+    e = f"((1-cos(PI*on/{frames}))/2)"
+    cx, cy = "(iw-iw/zoom)/2", "(ih-ih/zoom)/2"
+    return {"push-in": (f"1+0.15*{e}", cx, cy),
+            "pull-out": (f"1.15-0.15*{e}", cx, cy),
+            "pan-right": ("1.12", f"(iw-iw/zoom)*{e}", cy),
+            "pan-left": ("1.12", f"(iw-iw/zoom)*(1-{e})", cy),
+            "tilt-up": ("1.12", cx, f"(ih-ih/zoom)*(1-{e})"),
+            "tilt-down": ("1.12", cx, f"(ih-ih/zoom)*{e}"),
+            "static": ("1.04", cx, cy)}[motion]
+
+
 def scene_segment(tmp, idx, scene, dur, w, h, fps, style, seed, media):
     out = os.path.join(tmp, f"seg{idx:03d}.mp4")
     frames = max(1, int(round(dur * fps)))
-    motion = ["zoom-in", "pan-right", "zoom-out", "pan-left"][idx % 4]
     if media and os.path.exists(media) and media.lower().endswith(VIDEO_EXT):
         vf = f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},fps={fps},setsar=1"
         run(["ffmpeg", "-y", "-v", "error", "-stream_loop", "-1", "-i", media, "-frames:v", str(frames),
@@ -364,13 +407,7 @@ def scene_segment(tmp, idx, scene, dur, w, h, fps, style, seed, media):
     if img != media:
         make_background(img, w, h, style, seed, scene.desc)
     W, H = int(w * 1.2), int(h * 1.2)
-    zoom = {"zoom-in": f"1+0.12*on/{frames}", "zoom-out": f"1.12-0.12*on/{frames}"}.get(motion, "1.08")
-    if motion == "pan-right":
-        xe, ye = f"(iw-iw/zoom)*on/{frames}", "(ih-ih/zoom)/2"
-    elif motion == "pan-left":
-        xe, ye = f"(iw-iw/zoom)*(1-on/{frames})", "(ih-ih/zoom)/2"
-    else:
-        xe, ye = "(iw-iw/zoom)/2", "(ih-ih/zoom)/2"
+    zoom, xe, ye = camera_expr(camera_of(scene, idx, style), frames)
     vf = (f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
           f"zoompan=z='{zoom}':x='{xe}':y='{ye}':d={frames}:s={w}x{h}:fps={fps},setsar=1")
     run(["ffmpeg", "-y", "-v", "error", "-loop", "1", "-i", img, "-frames:v", str(frames), "-vf", vf,
@@ -567,25 +604,36 @@ def render_clip(project, ci, clip, fmt, outdir, fps, font):
 
     with tempfile.TemporaryDirectory() as tmp:
         video = os.path.join(tmp, "video.mp4")
-        if collage:
-            D = min(0.4, min(s.end - s.start for s in scenes) * 0.4) if len(scenes) > 1 else 0.0
-            segs = []
-            for j, s in enumerate(scenes):  # เผื่อเวลาซ้อน ให้ทรานซิชันอยู่กึ่งกลางจุดเปลี่ยนฉาก (ซับไม่เลื่อน)
-                dur = (s.end - s.start) + (D / 2 if j > 0 else 0) + (D / 2 if j + 1 < len(scenes) else 0)
+        # ทรานซิชันเข้าแต่ละฉาก (j ≥ 1): ตามบรรทัดฉาก "เปลี่ยน:" หรือวนตามสไตล์; เวลาซ้อนอยู่กึ่งกลางจุดเปลี่ยนฉาก (ซับไม่เลื่อน)
+        cycle = XFADE_CYCLE.get(style, ["fade"])
+        kinds, lens = [None], [0.0]
+        for j in range(1, len(scenes)):
+            want = XFADE.get(str((scenes[j].meta or {}).get("transition", "")).strip().lower())
+            kind = want or cycle[(j - 1) % len(cycle)]
+            short = min(scenes[j - 1].end - scenes[j - 1].start, scenes[j].end - scenes[j].start)
+            D = min(XFADE_LEN.get(kind, 0.4), short * 0.4)
+            if kind == "cut" or D < 2.0 / fps:
+                kind, D = "fade", 1.0 / fps  # ตัดตรง (ซ้อน 1 เฟรม)
+            kinds.append(kind)
+            lens.append(D)
+        segs = []
+        for j, s in enumerate(scenes):
+            dur = (s.end - s.start) + (lens[j] / 2 if j > 0 else 0) + (lens[j + 1] / 2 if j + 1 < len(scenes) else 0)
+            if collage:
                 segs.append(collage_segment(tmp, j, s, dur, w, h, fps, ci, framed, media_of(j)))
-            if len(segs) == 1 or D <= 0:
-                concat(segs, video)
             else:
-                ins = sum((["-i", p] for p in segs), [])
-                fc, prev = [], "[0:v]"
-                for j in range(1, len(segs)):
-                    fc.append(f"{prev}[{j}:v]xfade=transition=slideleft:duration={D:.3f}:offset={scenes[j].start - D / 2:.3f}[x{j}]")
-                    prev = f"[x{j}]"
-                run(["ffmpeg", "-y", "-v", "error", *ins, "-filter_complex", ";".join(fc), "-map", prev,
-                     "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p", video])
+                segs.append(scene_segment(tmp, j, s, max(0.2, dur), w, h, fps, style, ci * 100 + j, media_of(j)))
+        if len(segs) == 1:
+            concat(segs, video)
         else:
-            concat([scene_segment(tmp, j, s, max(0.2, s.end - s.start), w, h, fps, style, ci * 100 + j, media_of(j))
-                    for j, s in enumerate(scenes)], video)
+            ins = sum((["-i", p] for p in segs), [])
+            fc, prev = [], "[0:v]"
+            for j in range(1, len(segs)):
+                fc.append(f"{prev}[{j}:v]xfade=transition={kinds[j]}:duration={lens[j]:.3f}:"
+                          f"offset={max(0.0, scenes[j].start - lens[j] / 2):.3f}[x{j}]")
+                prev = f"[x{j}]"
+            run(["ffmpeg", "-y", "-v", "error", *ins, "-filter_complex", ";".join(fc), "-map", prev,
+                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p", video])
         music = project.get("musicFile")
         if not (music and os.path.exists(music)) and project.get("music", "musicbox") != "none":
             music = os.path.join(tmp, "music.wav")
@@ -610,7 +658,13 @@ def render_clip(project, ci, clip, fmt, outdir, fps, font):
             tracks.append((f"[{n}:a]aresample=44100,volume={0.55 if voice else 0.8}", "[x]"))
             n += 1
         sub = f"ass='{ff_filter_path(ass_path)}'" + (f":fontsdir='{ff_filter_path(bs.FONTS_DIR)}'" if os.path.isdir(bs.FONTS_DIR) else "")
-        fc = f"[0:v]{sub}[vo]"
+        grade = GRADES.get(project.get("grade") or GRADE_DEFAULT.get(style, "none"), "")
+        bars = ""
+        if style == "cinematic" and fmt == "16x9" and project.get("letterbox", True):  # แถบดำแบบจอภาพยนตร์ 2.39:1
+            bh = max(0, round((h - w / 2.39) / 2))
+            bars = f"drawbox=x=0:y=0:w=iw:h={bh}:color=black:t=fill,drawbox=x=0:y=ih-{bh}:w=iw:h={bh}:color=black:t=fill"
+        fc = "[0:v]" + ",".join(x for x in (grade, bars, sub) if x) + "[vo]"
+        loud = project.get("loudness", -14)  # ความดังมาตรฐานโซเชียล (LUFS) ใส่ null เพื่อปิด · วัดแล้วปรับทีหลัง (2 รอบ แม่นกว่า)
         if tracks:
             if len(tracks) == 1:
                 fc += f";{tracks[0][0]}[ao]"
@@ -624,7 +678,30 @@ def render_clip(project, ci, clip, fmt, outdir, fps, font):
         run(["ffmpeg", "-y", "-v", "error", *inputs, "-filter_complex", fc, *maps, "-t", f"{total:.2f}",
              "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p",
              "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", base + ".mp4"])
+        if tracks and isinstance(loud, (int, float)):
+            normalize_loudness(base + ".mp4", loud)
     return base + ".mp4", total, bs.warnings(chunks)
+
+
+def normalize_loudness(path, target=-14.0, tp=-1.5, lra=11):
+    """ปรับความดังทั้งคลิปให้ได้ target LUFS แบบ 2 รอบ (วัด → ปรับ) แตะเฉพาะเสียง ภาพคัดลอกตรง ๆ"""
+    r = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", path, "-vn", "-af",
+                        f"loudnorm=I={target}:TP={tp}:LRA={lra}:print_format=json", "-f", "null", "-"],
+                       capture_output=True, text=True, errors="replace")
+    err = r.stderr
+    try:
+        m = json.loads(err[err.rindex("{"):err.rindex("}") + 1])
+        if float(m["input_i"]) < -70:  # เงียบทั้งคลิป ไม่ต้องปรับ
+            return
+    except (ValueError, KeyError):
+        return
+    af = (f"loudnorm=I={target}:TP={tp}:LRA={lra}:measured_I={m['input_i']}:measured_TP={m['input_tp']}:"
+          f"measured_LRA={m['input_lra']}:measured_thresh={m['input_thresh']}:offset={m['target_offset']}:linear=true,"
+          f"aresample=44100")
+    tmp = path + ".loud.mp4"
+    run(["ffmpeg", "-y", "-v", "error", "-i", path, "-map", "0:v", "-map", "0:a", "-c:v", "copy", "-af", af,
+         "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", tmp])
+    os.replace(tmp, path)
 
 
 def main(argv=None):

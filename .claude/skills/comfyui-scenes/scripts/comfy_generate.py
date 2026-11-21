@@ -38,6 +38,7 @@ STYLE_SUFFIX = {  # ตรงกับ references/styles.md ของ social-vid
     "papercut": "layered paper-cut craft, minimal shapes, soft shadows",
     "neon-night": "quiet night city street, glowing neon, deep blue, bokeh",
     "film": "35mm film photo, warm grain, nostalgic, soft focus",
+    "cinematic": "cinematic realism, photorealistic film still, natural lighting, 35mm anamorphic lens, shallow depth of field, film color grading",
 }
 NEGATIVE = "text, watermark, logo, signature, blurry, deformed hands, extra fingers, lowres"
 

@@ -36,11 +36,12 @@ EMOTION_FACTOR = {
 FORMATS = {"9x16": (1080, 1920), "16x9": (1920, 1080), "1x1": (1080, 1080), "4x5": (1080, 1350)}
 SUB_Y = {"9x16": 0.68, "16x9": 0.84, "1x1": 0.80, "4x5": 0.78}  # ตำแหน่งกึ่งกลางซับเทียบความสูง
 KEYMAP = {"ป้าย": "badge", "ปี": "badge", "หัวข้อ": "title", "ภาพ": "layout", "เลย์เอาต์": "layout",
-          "เครดิต": "credit", "สี": "color", "โทน": "tone"}
+          "เครดิต": "credit", "สี": "color", "โทน": "tone", "กล้อง": "camera", "เปลี่ยน": "transition",
+          "ทรานซิชัน": "transition", "ซ้ำ": "repeat"}
 COLLAGE = ["#1f2a5c", "#f2b21b", "#6cb4e4", "#b3123a", "#1aa391", "#2b4fd6", "#e94b6a"]
 COLOR_TH = {"น้ำเงิน": "#1f2a5c", "กรมท่า": "#1f2a5c", "เหลือง": "#f2b21b", "ฟ้า": "#6cb4e4", "แดง": "#b3123a",
             "เขียว": "#1aa391", "น้ำเงินสด": "#2b4fd6", "ชมพู": "#e94b6a", "ดำ": "#16141c"}
-HI_LIME, HI_YELLOW = "#e6ff3d", "#ffd21f"
+HI_LIME, HI_YELLOW, HI_GOLD = "#e6ff3d", "#ffd21f", "#ffc96b"
 FONTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "fonts")
 
 # สระบน/ล่าง/วรรณยุกต์ ไม่นับเป็นตัวอักษรฐาน
@@ -57,6 +58,7 @@ class Chunk:
     text: str                 # มี *ไฮไลต์*
     pause: str = ""           # เครื่องหมายเว้นหลังท่อน
     emotion: str = ""
+    speaker: str = ""         # บทพูดของตัวละคร (บรรทัด "@ชื่อ: ...") ว่าง = ผู้บรรยาย
     sfx: list = field(default_factory=list)
     scene: int = 0
     start: float = 0.0
@@ -114,6 +116,10 @@ def parse_script(script: str) -> tuple[list[Scene], list[Chunk]]:
             sc.first_chunk = len(chunks)
             scenes.append(sc)
             continue
+        sp = re.match(r"^@\s*([^:：]{1,30}?)\s*[:：]\s*(.*)$", line)  # บทพูดตัวละคร: @แม่: ลูกจ๋า / กลับบ้านเถอะ //
+        speaker = sp.group(1).strip() if sp else ""
+        if sp:
+            line = sp.group(2)
         for s in re.findall(r"\{\s*เสียง\s*[:：]\s*(.*?)\s*\}", line):
             pending_sfx.append(s)
         line = re.sub(r"\{.*?\}", " ", line)
@@ -141,7 +147,7 @@ def parse_script(script: str) -> tuple[list[Scene], list[Chunk]]:
                 pieces.append(p + "*" if hl_open else p)
             for k, p in enumerate(pieces):
                 chunks.append(Chunk(text=p, pause=mark if k == len(pieces) - 1 else "/",
-                                    emotion=emotion, sfx=pending_sfx, scene=max(len(scenes) - 1, 0)))
+                                    emotion=emotion, sfx=pending_sfx, scene=max(len(scenes) - 1, 0), speaker=speaker))
                 pending_sfx = []
         if chunks and chunks[-1].pause == "":
             chunks[-1].pause = "/"
@@ -379,7 +385,7 @@ def _esc(s):
 def caption_mode(style, mode):
     if mode in ("word", "phrase"):
         return mode
-    return "word" if style in ("collage", "kinetic") else "phrase"
+    return "word" if style in ("collage", "kinetic", "cinematic") else "phrase"
 
 
 def to_ass(chunks, fmt="9x16", font="Kanit", scenes=None, style="pastel3d", mode="auto", framed=None,
@@ -389,7 +395,7 @@ def to_ass(chunks, fmt="9x16", font="Kanit", scenes=None, style="pastel3d", mode
     collage = style == "collage"
     framed = collage if framed is None else framed
     mode = caption_mode(style, mode)
-    hi = HI_YELLOW if collage else HI_LIME
+    hi = HI_YELLOW if collage else HI_GOLD if style == "cinematic" else HI_LIME
     if collage:
         cx0, cy0, cw, ch = card_rect(w, h, framed)
         L = collage_layout(cw, ch)

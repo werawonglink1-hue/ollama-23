@@ -35,6 +35,7 @@ STYLE_SUFFIX = {
     "papercut": "layered paper-cut craft, minimal shapes, soft shadows between layers, no text",
     "neon-night": "quiet night city street, glowing neon lights, deep blue, bokeh, no text",
     "film": "35mm film photo, warm grain, nostalgic Thai street, soft focus, no text",
+    "cinematic": "cinematic realism, photorealistic film still, natural lighting, 35mm anamorphic lens, shallow depth of field, film color grading, no text",
 }
 MUSIC_PROMPTS = {
     "doc": "cinematic documentary underscore, soft piano ostinato in A minor, gentle heartbeat pulse, warm strings, no vocals",
@@ -59,14 +60,28 @@ def cmd_plan(a):
         clip = p["clips"][ci - 1]
         scenes, chunks, total = bs.build(clip["script"], p.get("speed", "normal"), clip.get("timings"))
         if a.voice:
-            items.append({"index": idx, "kind": "voice", "tool": "generate_audio", "clip": ci,
-                          "target": f"media/clip{ci}-voice.wav",
-                          "params": {"model": "qwen_audio_tts", "prompt": va.tts_text(chunks), "language": "th",
-                                     "instruction": va.INSTRUCTIONS.get(p.get("narratorStyle", "doc"), va.INSTRUCTIONS["doc"])[:128],
-                                     "voice_type": "preset", "voice_id": a.voice_id or "<เลือกจาก list_voices>",
-                                     "format": "wav", "sample_rate": 44100, "speech_rate": va.RATE.get(p.get("speed", "normal"), 1.0)},
-                          "after": f"voice_align.py assemble (words จาก Whisper) --project {os.path.basename(a.project)} --clip {ci}"})
-            idx += 1
+            cast = {**(p.get("cast") or {}), **(clip.get("cast") or {})}
+            parts, missing = va.voice_parts(chunks, cast, p.get("narratorStyle", "doc"), p.get("speed", "normal"), ci)
+            if a.voice_id:
+                for part in parts:
+                    if part["params"]["voice_id"].startswith("<"):
+                        part["params"]["voice_id"] = a.voice_id
+            if len(parts) == 1:  # ผู้บรรยายคนเดียว
+                part = parts[0]
+                items.append({"index": idx, "kind": "voice", "tool": "generate_audio", "clip": ci,
+                              "target": f"media/clip{ci}-voice.wav", "params": part["params"],
+                              "after": f"whisper_words.py → voice_align.py assemble --project {os.path.basename(a.project)} --clip {ci}"})
+                idx += 1
+            else:  # หลายบทบาท: หนึ่งคำขอต่อช่วงผู้พูด
+                for part in parts:
+                    items.append({"index": idx, "kind": "voice-part", "tool": "generate_audio", "clip": ci,
+                                  "target": part["target"], "part": {k: part[k] for k in ("part", "speaker", "chunks")},
+                                  "params": part["params"],
+                                  "after": f"whisper_words.py ทุกช่วง → voice_align.py assemble-cast --project "
+                                           f"{os.path.basename(a.project)} --clip {ci}"})
+                    idx += 1
+                if missing:
+                    print(f"⚠ คลิป {ci}: ยังไม่ได้แคสต์เสียงให้ {', '.join(missing)} (ใส่ cast ใน project.json)", file=sys.stderr)
         metas = clip.get("scenes") or []
         for j, sc in enumerate(scenes):
             has = j < len(metas) and isinstance(metas[j], dict) and metas[j].get("media")
@@ -122,6 +137,10 @@ def cmd_fetch(a):
             metas[it["scene"] - 1].update({"media": it["target"], "prompt": it["params"]["prompt"], "generator": "higgsfield"})
         elif it["kind"] == "voice":
             p["clips"][it["clip"] - 1]["voiceRaw"] = it["target"]  # ยังไม่เว้นจังหวะ: ต้องผ่าน voice_align.py assemble
+        elif it["kind"] == "voice-part":  # หลายบทบาท: เก็บรายการช่วงไว้ให้ assemble-cast
+            parts = p["clips"][it["clip"] - 1].setdefault("voiceParts", [])
+            parts[:] = [x for x in parts if x.get("part") != it["part"]["part"]] + [dict(it["part"], target=it["target"])]
+            parts.sort(key=lambda x: x["part"])
         elif it["kind"] == "music":
             p["musicFile"] = it["target"]
         print(f"✔ [{it['index']}] {it['kind']} → {it['target']}")

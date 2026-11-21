@@ -25,19 +25,55 @@
     "requireAudio": true,
     "requireCoordinator": true,
     "requireSubtitle": true,
-    "deepCheck": true
+    "deepCheck": true,
+    "requireQcPass": true
   },
   "trends": {
     "geo": "TH",
     "lang": "th"
   },
   "genres": {
-    "ประวัติศาสตร์": {"project": "HISTORY", "visualStyle": "cinematic", "narratorStyle": "doc", "music": "doc"},
-    "ข่าวกระแสสังคม": {"project": "NEWS", "visualStyle": "collage", "narratorStyle": "doc", "music": "doc", "realEventsOnly": true},
-    "สารคดี Cinematic": {"project": "DOC", "visualStyle": "cinematic", "narratorStyle": "doc", "music": "doc"},
-    "เรื่องราวบุคคลสำคัญ": {"project": "BIO", "visualStyle": "collage", "narratorStyle": "doc", "music": "doc", "realEventsOnly": true},
-    "เล่าเรื่องละมุน": {"project": "STORY", "visualStyle": "pastel3d", "narratorStyle": "lamun", "music": "musicbox"},
-    "นิทานเด็ก": {"project": "KIDS", "visualStyle": "watercolor", "narratorStyle": "kru-nong", "music": "playful"}
+    "ประวัติศาสตร์": {
+      "project": "HISTORY",
+      "visualStyle": "cinematic",
+      "narratorStyle": "doc",
+      "music": "doc"
+    },
+    "ข่าวกระแสสังคม": {
+      "project": "NEWS",
+      "visualStyle": "collage",
+      "narratorStyle": "doc",
+      "music": "doc",
+      "realEventsOnly": true
+    },
+    "สารคดี Cinematic": {
+      "project": "DOC",
+      "visualStyle": "cinematic",
+      "narratorStyle": "doc",
+      "music": "doc"
+    },
+    "เรื่องราวบุคคลสำคัญ": {
+      "project": "BIO",
+      "visualStyle": "collage",
+      "narratorStyle": "doc",
+      "music": "doc",
+      "realEventsOnly": true
+    },
+    "เล่าเรื่องละมุน": {
+      "project": "STORY",
+      "visualStyle": "pastel3d",
+      "narratorStyle": "lamun",
+      "music": "musicbox"
+    },
+    "นิทานเด็ก": {
+      "project": "KIDS",
+      "visualStyle": "watercolor",
+      "narratorStyle": "kru-nong",
+      "music": "playful"
+    }
   },
-  "formats": ["9x16", "16x9"]
+  "formats": [
+    "9x16",
+    "16x9"
+  ]
 }
