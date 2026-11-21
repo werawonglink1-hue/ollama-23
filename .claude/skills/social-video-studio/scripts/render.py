@@ -719,7 +719,7 @@ def normalize_loudness(path, target=-14.0, tp=-1.5, lra=11):
         return
     af = (f"loudnorm=I={target}:TP={tp}:LRA={lra}:measured_I={m['input_i']}:measured_TP={m['input_tp']}:"
           f"measured_LRA={m['input_lra']}:measured_thresh={m['input_thresh']}:offset={m['target_offset']}:linear=true,"
-          f"aresample=44100")
+          f"aresample=44100,aformat=sample_fmts=fltp:channel_layouts=stereo")  # เสียงโมโน: ffmpeg 5.x ต้องระบุเลย์เอาต์ (ออกเป็นสเตอริโอ)
     tmp = path + ".loud.mp4"
     run(["ffmpeg", "-y", "-v", "error", "-i", path, "-map", "0:v", "-map", "0:a", "-c:v", "copy", "-af", af,
          "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", tmp])

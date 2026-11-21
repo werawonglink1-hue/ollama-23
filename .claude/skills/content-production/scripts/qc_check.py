@@ -156,7 +156,8 @@ def check_project(a, cfg, q, qc, m, monetized):
     seen, dups = {}, []
     for j, md in medias:
         if md:
-            if md in seen and "ซ้ำ" not in (scenes[j].meta or {}):
+            reason = (scenes[j].meta or {}).get("repeat") or (scenes[j].meta or {}).get("ซ้ำ")  # build_subs แปลง ซ้ำ: → repeat
+            if md in seen and not reason:
                 dups.append(f"ฉาก {seen[md] + 1} และ {j + 1}")
             seen.setdefault(md, j)
     qc.add("repeat", not dups, "visual", "ไม่มีภาพซ้ำ" if not dups else "ใช้ภาพเดิมซ้ำโดยไม่มีเหตุผล: " + ", ".join(dups) +

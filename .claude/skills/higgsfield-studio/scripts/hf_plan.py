@@ -167,6 +167,11 @@ def cmd_plan(a):
             has = j < len(metas) and isinstance(metas[j], dict) and metas[j].get("media")
             if a.images == "none" or (a.images == "missing" and has) or (a.images == "hero" and j > 0):
                 continue
+            if j > 0 and (sc.meta or {}).get("repeat"):  # "ซ้ำ:" = ใช้ภาพช็อตของฉากก่อนหน้า มุมกล้องใหม่ ไม่เสียเครดิต
+                items.append({"index": idx, "kind": "reuse", "tool": None, "clip": ci, "scene": j + 1, "from": j,
+                              "target": f"(ภาพเดียวกับฉาก {j})", "params": {}})
+                idx += 1
+                continue
             layout = sc.meta.get("layout", "")
             circle = "วงกลม" in layout or (style == "collage" and "เต็ม" not in layout and j % 3 == 1)
             if style == "collage":
@@ -208,6 +213,7 @@ def cmd_plan(a):
             "notes": ["เช็กราคาด้วย estimate_audio_cost / estimate_image_cost / estimate_video_cost แล้วขออนุมัติก่อนสร้าง (เกินงบใน production.config.json ต้องถามผู้ใช้)",
                       "character: เขียน prompt ตามเวิร์กโฟลว์ character-sheet ด้วย entry + sheetStyle (หรือใช้ budgetParams เมื่อผู้ใช้เลือกโหมดประหยัด) ดูรูปทุกภาพก่อนไปต่อ",
                       "image: medias ใส่ sheet ของตัวละครในช็อตแล้ว ส่งด้วย generate_image_batch ได้ทันที · motion: start_image คือ job_id ของภาพช็อต",
+                      "reuse (ฉากที่มี ซ้ำ:): ไม่ต้องส่งให้ Higgsfield ไม่เสียเครดิต fetch จะใส่ภาพของฉากก่อนหน้าให้เอง",
                       "เก็บผล jobs_wait เป็น {\"index\": {\"url\": ..., \"job_id\": ...}} แล้ว fetch (ระยะถัดไปใช้ job_id ต่อ)",
                       "ภาพที่ cutout=true: หลังสร้างเสร็จให้ remove_background (media_type=image) แล้วใช้ไฟล์ PNG ที่ได้",
                       "ส่งภาพหลายฉากพร้อมกันด้วย generate_image_batch (ครั้งละไม่เกิน 12) แล้ว jobs_wait"]}
@@ -236,6 +242,19 @@ def cmd_fetch(a):
     p = json.load(open(p_path, encoding="utf-8"))
     pdir = os.path.dirname(p_path)
     for it in plan["items"]:
+        if it["kind"] == "reuse":  # ฉาก "ซ้ำ:" รับภาพนิ่งของฉากก่อนหน้า (ทำตามลำดับ จึงได้ภาพที่เพิ่ง fetch)
+            metas = p["clips"][it["clip"] - 1].setdefault("scenes", [])
+            while len(metas) < it["scene"]:
+                metas.append({})
+            src = metas[it["from"] - 1] if isinstance(metas[it["from"] - 1], dict) else {}
+            still = src.get("still") or src.get("media")
+            if still:
+                metas[it["scene"] - 1].update({"media": still, "still": still, "job_id": src.get("job_id"),
+                                               "generator": src.get("generator", "higgsfield")})
+                if str(src.get("generator") or "").startswith("higgsfield"):
+                    set_scene_credit(p["clips"][it["clip"] - 1], it["scene"], "ภาพสร้างด้วย AI (Higgsfield)")
+                print(f"✔ [{it['index']}] reuse ฉาก {it['from']} → ฉาก {it['scene']}")
+            continue
         got = res.get(str(it["index"]))
         if not got:
             continue
