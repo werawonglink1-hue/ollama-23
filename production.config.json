@@ -1,0 +1,43 @@
+{
+  "_about": "ค่าของฝ่ายผลิตคอนเทนต์ AI (สกิล content-production) และระบบควบคุมเอกสาร (video-document-control) แก้ค่าได้ตามต้องการ",
+  "workflowRoot": "D:\\VIDEO_WORKFLOW",
+  "workRoot": "work",
+  "maxClipsPerOrder": 10,
+  "monetized": true,
+  "budget": {
+    "_about": "เครดิต Higgsfield ที่ทีมใช้ได้เองโดยไม่ต้องถามต่อคลิป (0 = ใช้ทางฟรีทั้งหมด) เกินงบต้องถามผู้ใช้ก่อนทุกครั้ง",
+    "higgsfieldCreditsPerClip": 1.0,
+    "allowVideoGeneration": false
+  },
+  "qc": {
+    "maxReturnRounds": 2,
+    "loudnessTarget": -14,
+    "loudnessTolerance": 2.5,
+    "truePeakMax": -1.0,
+    "maxSilence": 2.5,
+    "maxBlack": 0.6,
+    "maxFreeze": 6.0
+  },
+  "requirements": {
+    "minDuration": 3,
+    "maxDuration": 900,
+    "minShortSide": 720,
+    "requireAudio": true,
+    "requireCoordinator": true,
+    "requireSubtitle": true,
+    "deepCheck": true
+  },
+  "trends": {
+    "geo": "TH",
+    "lang": "th"
+  },
+  "genres": {
+    "ประวัติศาสตร์": {"project": "HISTORY", "visualStyle": "cinematic", "narratorStyle": "doc", "music": "doc"},
+    "ข่าวกระแสสังคม": {"project": "NEWS", "visualStyle": "collage", "narratorStyle": "doc", "music": "doc", "realEventsOnly": true},
+    "สารคดี Cinematic": {"project": "DOC", "visualStyle": "cinematic", "narratorStyle": "doc", "music": "doc"},
+    "เรื่องราวบุคคลสำคัญ": {"project": "BIO", "visualStyle": "collage", "narratorStyle": "doc", "music": "doc", "realEventsOnly": true},
+    "เล่าเรื่องละมุน": {"project": "STORY", "visualStyle": "pastel3d", "narratorStyle": "lamun", "music": "musicbox"},
+    "นิทานเด็ก": {"project": "KIDS", "visualStyle": "watercolor", "narratorStyle": "kru-nong", "music": "playful"}
+  },
+  "formats": ["9x16", "16x9"]
+}
