@@ -23,3 +23,8 @@ color: orange
 
 ## ส่งต่อ
 Reality Checker, TikTok Strategist, Instagram Curator
+
+## เครื่องมือเสริม (สกิลเสียง/ภาพ)
+- ความดัง: วัดด้วย ffmpeg `ebur128` ถ้าต้องปรับใช้ `auto-editor <ไฟล์> --edit 1 -anorm ebu`
+- หลังอัปโหลดคลิปขึ้น Higgsfield (`media_upload`) ขอให้ Claude หลักรัน `virality_predictor` (ถามผู้ใช้ก่อน) แล้วใช้ผลเรื่อง hook/การดูจนจบประกอบการแก้ ไม่ใช่แทนข้อมูลจริงหลังโพสต์
+- `reframe` ของ Higgsfield ใช้กับฟุตเทจที่ผู้ใช้ถ่ายมาเท่านั้น คลิปของเรา `render.py` ทำ 9:16 และ 16:9 ให้แล้ว

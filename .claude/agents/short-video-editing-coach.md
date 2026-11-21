@@ -26,3 +26,9 @@ Video Optimization Specialist → Reality Checker
 
 ## ห้าม
 ใช้เพลง/เสียงที่ไม่มีสิทธิ์ใช้ · รายงานว่าเสร็จโดยไม่ได้เปิดดูเฟรม
+
+## เครื่องมือเสริม (สกิลเสียง/ภาพ)
+- เสียงพากย์จริง (Higgsfield TTS หรือผู้ใช้อัดเอง): `whisper_words.py` → `voice_align.py assemble ... --project project.json --clip N`
+  ได้เสียงที่เว้นจังหวะ `// ///` ตามสคริปต์ + `timings` ให้ซับตรงเสียง (ดู `.claude/skills/higgsfield-studio/SKILL.md`)
+- เสียงที่ผู้ใช้อัดเอง: ตัดเฉพาะช่วงเงียบยาวด้วย `auto-editor` (`--smooth 1.6s,0.2s --margin 0.3s,0.3s`) ห้ามตัดแบบค่าเริ่มต้น จังหวะจะหาย
+- เสียงประกอบ `{เสียง: ...}` ในสคริปต์ + เสียงเปลี่ยนฉากอัตโนมัติ ใช้ไฟล์จริงได้ทาง `sfxFiles` (เช่นจาก `audiocraft-music` เฉพาะงานไม่หารายได้) เพลงจากไฟล์ใช้ `musicFile`

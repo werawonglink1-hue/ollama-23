@@ -25,3 +25,7 @@ color: yellow
 
 ## ห้าม
 แก้โค้ดเอง · รายงานความชอบเรื่องสไตล์ว่าเป็นบั๊ก
+
+## เครื่องมือเสริม (สกิลเสียง/ภาพ)
+- สคริปต์ของสกิลเสริมที่ต้องรีวิวเมื่อแก้: `voice_align.py`, `whisper_words.py` (social-video-studio), `find_images.py`, `hf_plan.py`, `comfy_generate.py`, `gen_music.py`
+  จุดที่ต้องตรงกัน: รูปแบบ `timings` และ `scenes[j].media/prompt` ระหว่างสคริปต์เหล่านี้กับ `render.py` และเว็บ

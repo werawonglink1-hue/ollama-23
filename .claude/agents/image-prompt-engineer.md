@@ -24,3 +24,10 @@ color: purple
 
 ## ส่งต่อ
 ผู้ใช้หรือเครื่องมือสร้างภาพ → Short-Video Editing Coach (ใส่ `media` ใน project.json)
+
+## เครื่องมือเสริม (สกิลเสียง/ภาพ)
+- เขียน prompt ลง `clips[i].scenes[j].prompt` ใน project.json แล้ว `hf_plan.py` / `comfy_generate.py` จะใช้ prompt นั้นแทนคำบรรยายฉาก
+- Higgsfield (คุณภาพสูง ใช้เครดิต): `python3 .claude/skills/higgsfield-studio/scripts/hf_plan.py plan work/<slug>/project.json --images missing > work/<slug>/hf_plan.json`
+  ส่งแผนให้ Claude หลัก (โปรดิวเซอร์) เป็นผู้ประเมินราคา ขออนุมัติผู้ใช้ และเรียกเครื่องมือ Higgsfield; ฉาก `cutout: true` ต้อง `remove_background`
+- ComfyUI บนเครื่องผู้ใช้ (ฟรี): `python3 .claude/skills/comfyui-scenes/scripts/comfy_generate.py project work/<slug>/project.json --clip N`
+- ภาพคนที่ดูเหมือนจริงใส่ `เครดิต: ภาพสร้างด้วย AI` ในบรรทัดฉากทุกครั้ง

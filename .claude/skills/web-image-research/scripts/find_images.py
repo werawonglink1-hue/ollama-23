@@ -28,10 +28,20 @@ COMMONS = "https://commons.wikimedia.org/w/api.php"
 OPENVERSE = "https://api.openverse.org/v1/images/"
 
 
-def _get(url, timeout=30):
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return r.read()
+def _get(url, timeout=30, tries=4):
+    """GET แบบสุภาพ: ถ้าเว็บตอบ 429/503 (ขอถี่เกินไป) จะรอตาม Retry-After (หรือ 3, 6, 12 วิ) แล้วลองใหม่"""
+    import time
+    import urllib.error
+    for k in range(tries):
+        req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json, image/*;q=0.9"})
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return r.read()
+        except urllib.error.HTTPError as e:
+            if e.code not in (429, 503) or k == tries - 1:
+                raise
+            wait = e.headers.get("Retry-After", "")
+            time.sleep(min(30.0, float(wait)) if wait.isdigit() else 3.0 * 2 ** k)
 
 
 def _clean(s):
@@ -50,7 +60,7 @@ def license_ok(lic, allow_nc=False):
 def search_commons(q, limit, allow_nc):
     params = {"action": "query", "format": "json", "generator": "search", "gsrsearch": f"{q} filetype:bitmap",
               "gsrnamespace": "6", "gsrlimit": str(limit * 2), "prop": "imageinfo",
-              "iiprop": "url|extmetadata|size|mime", "iiurlwidth": "1600"}
+              "iiprop": "url|extmetadata|size|mime", "iiurlwidth": "1920"}  # ขนาดมาตรฐานของ Wikimedia (ขนาดอื่นโดนปฏิเสธ 429)
     data = json.loads(_get(COMMONS + "?" + urllib.parse.urlencode(params)))
     out = []
     for page in sorted((data.get("query") or {}).get("pages", {}).values(), key=lambda p: p.get("index", 0)):
@@ -90,7 +100,9 @@ def search_openverse(q, limit, allow_nc):
 def credit_line(c):
     """บรรทัดเครดิตสั้นสำหรับ `เครดิต:` ในบรรทัดฉาก (แสดงมุมขวาบนของการ์ด)"""
     author = c["author"] if len(c["author"]) <= 40 else c["author"][:37] + "..."
-    return f"{author} / {c['source'].split('/')[0]} ({c['license']})"
+    host = c["source"].split("/")[-1]  # "Openverse/flickr" → เครดิตเว็บต้นทางจริง (Flickr) ไม่ใช่ตัวค้นหา
+    host = {"flickr": "Flickr", "wikimedia": "Wikimedia Commons"}.get(host, host[:1].upper() + host[1:])
+    return f"{author} / {host} ({c['license']})"
 
 
 def cmd_search(a):

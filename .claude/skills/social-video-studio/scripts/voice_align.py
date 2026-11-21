@@ -101,9 +101,10 @@ def load_words(path):
 
 def align(chunks, words):
     """คืนรายการ (start, end) ของแต่ละท่อนในไฟล์เสียงเดิม ด้วยการเทียบตัวอักษรระหว่างสคริปต์กับคำที่ Whisper ได้ยิน"""
-    s_chars, s_owner = [], []
+    s_chars, s_owner, s_range = [], [], []
     for i, c in enumerate(chunks):
         n = norm(c.text)
+        s_range.append((len(s_chars), len(s_chars) + len(n)))
         s_chars.extend(n)
         s_owner.extend([i] * len(n))
     t_chars, t_time = [], []
@@ -122,20 +123,40 @@ def align(chunks, words):
     for blk in sm.get_matching_blocks():
         for k in range(blk.size):
             hit[blk.a + k] = blk.b + k
-    first, last = {}, {}
+    first, last, first_s, last_s = {}, {}, {}, {}
     for si, ti in sorted(hit.items()):
         i = s_owner[si]
-        first.setdefault(i, ti)
-        last[i] = ti
+        if i not in first:
+            first[i], first_s[i] = ti, si
+        last[i], last_s[i] = ti, si
     n = len(chunks)
     starts, ends = [None] * n, [None] * n
     end_time = words[-1]["end"]
+
+    def word_end_at(t):
+        return max(t, next((w["end"] for w in words if w["start"] <= t <= w["end"] + 1e-6), t))
+
     for i in range(n):
         if i in first:
             starts[i] = t_time[first[i]]
-            li = last[i]
-            nxt_word_end = next((w["end"] for w in words if w["start"] <= t_time[li] <= w["end"] + 1e-6), t_time[li])
-            ends[i] = max(nxt_word_end, t_time[li])
+            ends[i] = word_end_at(t_time[last[i]])
+    # Whisper มักฟังคำไทยบางคำเพี้ยน (เช่น "โรงเรียน" → "Clear ven") ตัวอักษรตรงนั้นจึงจับคู่ไม่ได้
+    # เสียงที่ไม่ได้จับคู่ระหว่างท่อน i กับ i+1 = หางที่หายไปของท่อน i และ/หรือหัวที่หายไปของท่อน i+1
+    # แบ่งตามจำนวนตัวอักษรที่ยังไม่ได้จับคู่ ไม่งั้นซับท่อนนั้นจะหายเร็วกว่าเสียง หรือโผล่ช้ากว่าเสียง
+    for i in range(n - 1):
+        j = i + 1
+        if i not in first or j not in first or first[j] - last[i] <= 1:
+            continue
+        tail = s_range[i][1] - 1 - last_s[i]
+        head = first_s[j] - s_range[j][0]
+        if tail + head == 0:
+            continue
+        gap = first[j] - last[i] - 1
+        k = last[i] + 1 + round(gap * tail / (tail + head))  # ตัวอักษรแรกที่เป็นของท่อน j
+        if tail:
+            ends[i] = max(ends[i], word_end_at(t_time[k - 1]))
+        if head:
+            starts[j] = min(starts[j], t_time[k])
     # ท่อนที่ไม่เจอเลย: เกลี่ยตามความยาวระหว่างท่อนข้างเคียงที่เจอ
     known = [i for i in range(n) if starts[i] is not None]
     if not known:

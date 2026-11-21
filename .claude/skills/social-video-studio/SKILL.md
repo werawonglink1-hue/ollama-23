@@ -37,11 +37,15 @@ C) แอด:     Pricing Analyst → Offer & Lead Gen Strategist → Ad Creativ
 D) ทำเว็บ:  UI Designer → Frontend Developer → Code Reviewer + Security Auditor (ขนานกัน) → Minimal Change Engineer → Reality Checker
 ```
 
-1. **Content Creator**: brief เป็นแผนซีรีส์ 1–5 คลิป (มุมเล่าไม่ซ้ำ) และสคริปต์ตาม `script-rules.md` (สารคดี: เว้นวรรคระหว่างคำ ใส่ `ป้าย:` `หัวข้อ:` ทุกบท)
+1. **Content Creator**: brief เป็นแผนซีรีส์ 1–5 คลิป (มุมเล่าไม่ซ้ำ) และสคริปต์ตาม `script-rules.md` (สารคดี: เว้นวรรคระหว่างคำ ใส่ `ป้าย:` `หัวข้อ:` ทุกบท) หาข้อมูลด้วย WebSearch/WebFetch หรือ `agent-reach`
 2. **Reality Checker**: ตรวจข้อเท็จจริงก่อนลงมือทำภาพ
-3. **Visual Storyteller** + **Image Prompt Engineer**: บรรทัดฉาก สตอรีบอร์ด prompt ภาพ; **Brand Guardian** ตรวจแบรนด์/ลิขสิทธิ์
-4. **Short-Video Editing Coach**: `build_subs.py` ไม่มีท่อนเร็วเกิน → `render.py` → เปิดดูเฟรม; **Video Optimization Specialist** ตรวจสเปก/ปก/ความดัง
-5. **Reality Checker** ตรวจไฟล์จริงก่อนส่งผู้ใช้ แล้วจึงต่อสายงาน B/C ตามที่ผู้ใช้ต้องการ
+3. **Visual Storyteller** เลือกแหล่งภาพทีละฉาก: สถานที่/สิ่งของ/เหตุการณ์จริง → ภาพจริงถูกลิขสิทธิ์ (`web-image-research` ใส่เครดิตให้เอง);
+   ตัวละคร อารมณ์ ฉากที่หาภาพไม่ได้ → **Image Prompt Engineer** ทำภาพ AI (`higgsfield-studio` ใช้เครดิต หรือ `comfyui-scenes` ฟรีบน GPU ผู้ใช้);
+   ไม่มีภาพ → `render.py` วาดภาพแทนตามสไตล์ · ฉากวงกลมใช้ PNG ตัดพื้นหลังจะเป็นสติกเกอร์ขอบขาว · **Brand Guardian** ตรวจแบรนด์/ลิขสิทธิ์/เครดิต
+4. **เสียงพากย์** (ถ้าผู้ใช้ต้องการเสียงจริงแทนเสียงอ่านของเบราว์เซอร์): สร้างด้วย `higgsfield-studio` (TTS ไทย) หรือให้ผู้ใช้อัดเอง (`auto-editor` ตัดช่วงเงียบยาว)
+   → `whisper_words.py` (เวลาแต่ละคำ) → `voice_align.py assemble` ใส่จังหวะ `// ///` ตามสคริปต์และเขียน `voice` + `timings` ลง project.json
+5. **Short-Video Editing Coach**: `build_subs.py` ไม่มีท่อนเร็วเกิน → `render.py` → เปิดดูเฟรม; **Video Optimization Specialist** ตรวจสเปก/ปก/ความดัง
+6. **Reality Checker** ตรวจไฟล์จริงก่อนส่งผู้ใช้ แล้วจึงต่อสายงาน B/C ตามที่ผู้ใช้ต้องการ
 
 ถ้าใช้ Agent tool ได้ ให้เรียกตามชื่อไฟล์ (งานที่ขนานกันได้ให้เรียกพร้อมกัน) ถ้าไม่ได้ ให้ทำตามบทบาทเรียงลำดับเองในเซสชันเดียว
 
@@ -51,12 +55,33 @@ D) ทำเว็บ:  UI Designer → Frontend Developer → Code Reviewer + S
 # สคริปต์เป็นซับ (ดูเวลาแต่ละท่อน + เตือนท่อนที่เร็วเกิน)
 python3 .claude/skills/social-video-studio/scripts/build_subs.py script.txt --speed normal --style collage --framed --srt out.srt --ass out.ass
 
+# เสียงพากย์จริง → เวลาแต่ละคำ → ใส่จังหวะเว้นวรรคตามสคริปต์ + timings ลง project.json
+python3 .claude/skills/social-video-studio/scripts/voice_align.py prepare script.txt --narrator doc --speed normal > tts.json   # ข้อความ + พารามิเตอร์ TTS
+python3 .claude/skills/social-video-studio/scripts/whisper_words.py media/clip1-voice.wav --out media/clip1-words.json
+python3 .claude/skills/social-video-studio/scripts/voice_align.py assemble script.txt --voice media/clip1-voice.wav \
+        --words media/clip1-words.json --out media/clip1-voice-paced.wav --speed normal --project project.json --clip 1
+
 # project.json (จากเว็บ หรือ agent) เป็น MP4
 python3 .claude/skills/social-video-studio/scripts/render.py project.json --out out/ --formats 9x16,16x9
 ```
 
-`render.py` ใช้สื่อที่ผู้ใช้ให้ (รูป/วิดีโอต่อฉาก ไฟล์เสียงพากย์ เพลง) ถ้าไม่มีจะสร้างภาพแทนที่ตามสไตล์ให้ ถ้ามีไฟล์เสียงพากย์ + `timings` (จากโหมด "อัดเสียง/แตะเพื่อซิงก์" ในเว็บ) ซับจะตรงเสียงจริง
+`render.py` ใช้สื่อที่ผู้ใช้ให้ (รูป/วิดีโอต่อฉาก ไฟล์เสียงพากย์ เพลง) ถ้าไม่มีจะสร้างภาพแทนที่ตามสไตล์ให้ ถ้ามีไฟล์เสียงพากย์ + `timings`
+(จาก `voice_align.py` หรือโหมด "อัดเสียง/แตะเพื่อซิงก์" ในเว็บ) ซับจะตรงเสียงจริง · เสียงประกอบ: `{เสียง: ลม}` ในสคริปต์ + เสียงกระดาษ/วูบตอนเปลี่ยนฉาก
+(ใช้ไฟล์จริงได้ทาง `sfxFiles`, ปิดด้วย `"sfx": false`) · เพลงจากไฟล์: `musicFile`
 ต้องมี `ffmpeg` (มี libass) และ Python 3 + Pillow; ถ้ามี Node.js จะใช้ตัดคำภาษาไทยสำหรับซับคำต่อคำ (ไม่มีก็ตัดตามช่องว่างในสคริปต์)
+
+## สกิลเสริมเสียงและภาพ (ทำงานกับ project.json เดียวกัน)
+
+| ต้องการ | สกิล | ค่าใช้จ่าย |
+|---|---|---|
+| เสียงพากย์ AI ภาษาไทยตามสไตล์ผู้เล่า + ภาพ AI ตัวละคร/ฉาก + ตัดพื้นหลัง + เตรียมโพสต์ TikTok | `higgsfield-studio` | เครดิต Higgsfield (เสียง ≈0.2/คลิป, ภาพ ≈0.75/ภาพ) ขออนุมัติทุกครั้ง |
+| ภาพจริงจากเว็บที่ใช้ได้ถูกลิขสิทธิ์ พร้อมเครดิตบนการ์ด | `web-image-research` | ฟรี |
+| ภาพ AI บน GPU ของผู้ใช้ | `comfyui-scenes` | ฟรี |
+| ตัดช่วงเงียบเสียงที่อัดเอง ถอดเวลาคำ ส่งงานเข้า Resolve/Premiere | `auto-editor` | ฟรี |
+| เพลง/เสียงประกอบ AI บนเครื่องผู้ใช้ | `audiocraft-music` | ฟรี แต่ **ห้ามใช้กับงานหารายได้** (CC BY-NC) |
+| ข้อมูล ซับ คอมเมนต์ เทรนด์จาก YouTube/Reddit/X ฯลฯ (อ่านอย่างเดียว) | `agent-reach` | ฟรี |
+
+ไม่มีสกิลเสริมก็ทำคลิปได้ครบ (เสียงอ่านเบราว์เซอร์/อัดเอง, ภาพแทนที่, เพลงสังเคราะห์) สกิลเสริมเป็นทางยกระดับคุณภาพ
 
 ## Skill อื่นที่ดึงมาใช้
 
@@ -65,10 +90,12 @@ python3 .claude/skills/social-video-studio/scripts/render.py project.json --out 
 - `claude-api`: ตอนแก้โหมด "เขียนสคริปต์ด้วย Claude" ในเว็บ (model id, header)
 - `design:ux-copy`: ตรวจข้อความปุ่มและคำอธิบายภาษาไทยในเว็บ
 - `engineering:testing-strategy`: ตอนเพิ่มเทสต์ให้ตัวตั้งเวลาซับ
+- `higgsfield-studio`, `web-image-research`, `comfyui-scenes`, `auto-editor`, `audiocraft-music`, `agent-reach`: ดูตารางสกิลเสริมด้านบน
 
 ## ข้อควรระวัง
 
 - สไตล์ "ครูหน่อง" และ "มานะ" เป็น **โทนการเล่า** (น้ำเสียง จังหวะ คำลงท้าย) ไม่ใช่การปลอมเป็นบุคคลจริงหรือก๊อปตัวละคร/ภาพจากหนังสือเรียน ตั้งชื่อและออกแบบตัวละครใหม่เสมอ
 - คลิปสารคดีเรื่องคนจริง: ใช้ข้อเท็จจริงที่ตรวจสอบได้เท่านั้น ห้ามแต่งตัวเลข ใส่ `เครดิต:` ให้ภาพที่ใช้ และใช้ภาพที่มีสิทธิ์ใช้ (เช่น ครีเอทีฟคอมมอนส์)
 - คลิปตัวอย่างมีแถบหัวโฆษณาแอปของคนอื่นและช่วงท้ายเป็นโฆษณา ห้ามคัดลอกแบรนด์หรือข้อความนั้น แถบหัวของเราใช้ชื่อซีรีส์/ช่องของผู้ใช้
-- ไม่ใช้เสียงโคลนของคนจริงโดยไม่ได้รับอนุญาต; เพลงและซาวด์ที่สร้างเป็นเสียงสังเคราะห์ปลอดลิขสิทธิ์
+- ไม่ใช้เสียงโคลนของคนจริงโดยไม่ได้รับอนุญาต; เพลงและซาวด์สังเคราะห์ใน `render.py` ปลอดลิขสิทธิ์ ส่วนเสียงจาก AudioCraft ใช้ได้เฉพาะงานไม่หารายได้
+- ภาพ AI ที่ดูเหมือนจริงใส่ `เครดิต: ภาพสร้างด้วย AI` และติดป้ายเนื้อหา AI ตอนโพสต์ตามกติกาแพลตฟอร์ม; ห้ามเอาหน้าคนจริงมาเป็นตัวละครในเรื่องแต่ง

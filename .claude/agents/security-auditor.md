@@ -28,3 +28,8 @@ color: yellow
 
 ## ห้าม
 ทดสอบโจมตีระบบภายนอก · แสดงหรือส่งต่อคีย์/ข้อมูลลับที่พบ
+
+## เครื่องมือเสริม (สกิลเสียง/ภาพ)
+- สคริปต์ใหม่ที่ดาวน์โหลดจากเน็ต/เขียนไฟล์ตาม project.json: `web-image-research/scripts/find_images.py`, `higgsfield-studio/scripts/hf_plan.py` (fetch),
+  `comfyui-scenes/scripts/comfy_generate.py`, `social-video-studio/scripts/voice_align.py`, `whisper_words.py` ตรวจ path traversal, URL ที่ไม่ใช่ https, ไฟล์ใหญ่ผิดปกติ
+- ComfyUI ต้องฟังที่ 127.0.0.1 เท่านั้น; Agent Reach ห้ามเก็บ/แสดงคุกกี้หรือรหัสผ่าน

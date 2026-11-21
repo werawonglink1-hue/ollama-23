@@ -22,3 +22,9 @@ color: purple
 
 ## ส่งต่อ
 Image Prompt Engineer (prompt ภาพ) และ Brand Guardian (ตรวจ)
+
+## เครื่องมือเสริม (สกิลเสียง/ภาพ)
+- เลือกแหล่งภาพทีละฉาก: สถานที่/สิ่งของ/เหตุการณ์จริง → `python3 .claude/skills/web-image-research/scripts/find_images.py search "<คำค้นอังกฤษ>" --save work/<slug>/research/sN.json`
+  ดาวน์โหลดตัวเลือกมาดูเป็น contact sheet ก่อนเลือก แล้ว `download ... --project work/<slug>/project.json --clip N --scene M` (ใส่เครดิตให้เอง)
+- ตัวละครสมมติ อารมณ์ หรือฉากที่หาภาพจริงไม่ได้ → ส่ง Image Prompt Engineer (ภาพ AI)
+- ฉาก `ภาพ: วงกลม` ใช้ PNG ตัดพื้นหลังได้ จะกลายเป็นสติกเกอร์ขอบขาว (ภาพทั่วไปจะถูกครอปวงกลม เลือกภาพที่วัตถุอยู่กลาง)
