@@ -55,6 +55,7 @@ python3 .claude/skills/cinematic-image-to-video/scripts/check_i2v.py --video /tm
 ## ทำงานร่วมกัน (Codex ↔ Claude Code)
 
 - branch หลักของงานตอนนี้คือ `claude/beautiful-goldberg-a1jt5q` (repo ยังไม่มี `main`)
-- งานหนึ่งชิ้น = หนึ่ง branch (`codex/T02-tests`, `claude/T03-...`) = หนึ่ง PR เข้าหา branch หลัก
+- Codex: งานหนึ่งชิ้น = หนึ่ง branch (`codex/T02-tests` ฯลฯ) = หนึ่ง PR เข้าหา branch หลัก
+- Claude Code (เซสชันที่ดูแล branch หลัก) commit ตรงลง branch หลัก และรีวิว/ทดสอบ PR ของ Codex ก่อนรวม
 - เริ่มงาน: เปลี่ยนสถานะใน `TASKS.md` เป็น `กำลังทำ (ชื่อ agent)` · เสร็จ: `เสร็จ` + สรุปผลทดสอบใน PR
 - งานที่ต้องใช้เครื่อง/บัญชีของผู้ใช้ (GPU, Drive D:, Higgsfield, โพสต์โซเชียล) agent ทำแทนไม่ได้ — ระบุไว้ใน TASKS.md ว่า "ผู้ใช้"

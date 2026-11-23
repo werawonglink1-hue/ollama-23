@@ -1,6 +1,6 @@
 ---
 name: cinematic-image-to-video
-description: ทำวิดีโอแอนิเมชัน 3D แบบภาพยนตร์จากภาพนิ่งของแต่ละช็อต (image-to-video) ตามมาตรฐาน "CINEMATIC 3D ANIMATION — IMAGE TO VIDEO" ของช่อง — ตัวละครหน้าตา ทรงผม เสื้อผ้าเหมือนเดิมทุกเฟรม (แนบ character sheet) การแสดงเป็นธรรมชาติ (หายใจ กะพริบตา สีหน้า) กล้องแบบภาพยนตร์ สภาพแวดล้อมขยับเฉพาะที่มีในฉาก ห้ามภาพกระโดด/นิ้วเกิน/ตัวหนังสือ แล้วตรวจคลิปด้วย check_i2v.py ก่อนตัดต่อที่ 24 fps. ใช้เมื่อผู้ใช้ขอ "Gen วิดีโอจากภาพ", "ทำให้ภาพขยับ", "image to video", "ให้ตัวละครเคลื่อนไหว", "CINEMATIC 3D ANIMATION" หรือขั้น "วิดีโอ" ของฝ่ายผลิต.
+description: ทำวิดีโอแอนิเมชัน 3D แบบภาพยนตร์จากภาพนิ่งของแต่ละช็อต (image-to-video) ตามมาตรฐาน "CINEMATIC 3D ANIMATION — IMAGE TO VIDEO" ของช่อง — ตัวละครหน้าตา ทรงผม เสื้อผ้าเหมือนเดิมทุกเฟรม (แนบ character sheet) การแสดงเป็นธรรมชาติ (หายใจ กะพริบตา สีหน้า) กล้องแบบภาพยนตร์ สภาพแวดล้อมขยับเฉพาะที่มีในฉาก ห้ามภาพกระโดด/นิ้วเกิน/ตัวหนังสือ แล้วตรวจคลิปด้วย check_i2v.py ก่อนตัดต่อที่ 24 fps · มีทางเลือกฟรีไม่ใช้ Higgsfield (i2v_free.py: engine local ภาพนิ่งมีชีวิต 2.5D ทุกเครื่อง, engine comfyui วิดีโอ AI Wan 2.2 บน GPU ของผู้ใช้). ใช้เมื่อผู้ใช้ขอ "Gen วิดีโอจากภาพ", "ทำให้ภาพขยับ", "image to video", "ให้ตัวละครเคลื่อนไหว", "CINEMATIC 3D ANIMATION" หรือขั้น "วิดีโอ" ของฝ่ายผลิต.
 ---
 
 # Cinematic 3D Animation — Image to Video
@@ -52,6 +52,30 @@ python3 $H plan work/<โปรเจกต์>/project.json --motion marked > p
 
 **เรื่อง 4K:** TikTok / Reels / Shorts แสดงผลสูงสุดราว 1080p และ render.py ส่งออก 1080x1920 อยู่แล้ว 4K จึงคุ้มเฉพาะงาน
 YouTube แนวนอนหรือมาสเตอร์เก็บไว้ (แพงกว่า 6–22 เท่า) ค่าเริ่มต้นใช้ 720p แล้วขยายเป็น 1080p ตอนตัดต่อ
+
+## ทางเลือกเสริม: ไม่ใช้ Higgsfield (ฟรี)
+
+ใช้เมื่อเครดิตหมด ผู้ใช้ไม่อนุมัติเครดิตวิดีโอ หรืออยากพรีวิวก่อนจ่าย — สคริปต์เดียว `i2v_free.py` เลือก engine ได้ 2 แบบ
+
+| engine | ต้องมี | ได้อะไร | ทำไม่ได้ |
+|---|---|---|---|
+| `local` (`animate_still.py`) | Python + numpy + Pillow + ffmpeg (มี `opencv-python-headless` เร็วขึ้น ~4 เท่า) ทุกเครื่อง ไม่ต่อเน็ต | ภาพนิ่ง "มีชีวิต" 2.5D: กล้อง dolly/แพน + ส่ายแบบถือกล้อง, ไฟเมือง/หลอดไฟระยิบ (เฉพาะจุดไฟเล็ก ๆ), ฝุ่นในแสง, ไอน้ำ, พื้นเปียกพลิ้ว, หายใจ, แสงจอเต้น | กะพริบตา สีหน้า มือขยับ น้ำตาไหล |
+| `comfyui` (`comfy_i2v.py`) | ComfyUI บนเครื่องที่มี GPU ~8–12 GB+ และโมเดล Wan 2.2 TI2V-5B (Apache-2.0 ใช้เชิงพาณิชย์ได้) | วิดีโอ AI จริง 720p 24 fps ตาม prompt มาตรฐานเดียวกัน (การแสดงครบตามสเปก) | ไม่มี GPU = รันไม่ได้ |
+
+```bash
+P=.claude/skills/cinematic-image-to-video/scripts
+python3 $P/i2v_free.py work/<โปรเจกต์>/project.json --engine local --scenes all     # ฉากที่ยังเป็นภาพนิ่งทุกฉาก
+python3 $P/i2v_free.py work/<โปรเจกต์>/project.json --engine comfyui --server http://127.0.0.1:8188 [--workflow my_api.json]
+python3 $P/check_i2v.py work/<โปรเจกต์>/project.json && python3 .claude/skills/social-video-studio/scripts/render.py work/<โปรเจกต์>/project.json
+```
+
+- **engine local ต้องวางเอฟเฟกต์ให้ตรงภาพ**: เปิดดูภาพช็อต (ทำกริด 10×10 ช่วยอ่านพิกัด) แล้วใส่ `scenes[j].localFx` เช่น
+  `{"twinkle": [[0,0,1,0.5]], "particles": 30, "steam": [[0.64,0.43]], "breath": [[0.5,0.45,0.2]], "ripple": [[0,0.7,0.4,1]], "glow": [[0.5,0.55,0.2]], "focus": [0.5,0.3]}`
+  พิกัดเป็นสัดส่วนภาพ 0–1 · ไอน้ำวางเหนือชาม/หม้อ · `ripple` เฉพาะพื้นสะท้อน ห้ามครอบตัวละคร · `twinkle` จำกัดกรอบให้พ้นหน้า
+  ไม่ใส่ = เลือกให้จากคำในฉาก (กลางคืน/ไฟเมือง → twinkle, ทุกฉากมีฝุ่นในแสง)
+- **engine comfyui**: workflow มาตรฐาน `references/comfyui_wan22_ti2v_5b_api.json` (ชื่อไฟล์โมเดลตามเทมเพลต Wan 2.2 ของ ComfyUI)
+  ถ้าเครื่องผู้ใช้ตั้งชื่อต่างไป ให้ Export workflow ของตัวเอง (API) แล้วส่ง `--workflow` สคริปต์จะใส่ภาพ prompt seed ความยาว (4k+1 เฟรม) fps ขนาดให้เอง
+- ผลทุก engine เขียน `video` + `generator` ลงฉาก ภาพนิ่งเดิมเก็บใน `still` · ภาพยังเป็นภาพ AI → คงป้ายเครดิตเดิมไว้
 
 ## กติกา
 
