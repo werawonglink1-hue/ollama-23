@@ -14,7 +14,7 @@
       --fx '{"twinkle": 1, "particles": 40, "steam": [[0.83, 0.47]], "breath": [[0.5, 0.45, 0.2]]}'
   พิกัดทุกตัวเป็นสัดส่วนของภาพ (0–1) จากมุมซ้ายบน · breath/glow = [x, y, รัศมีเทียบความกว้าง]
   ripple = [[x0, y0, x1, y1]] กรอบพื้นที่สะท้อน (อย่าครอบตัวละคร) · focus = [x, y] จุดที่กล้องดันเข้าไปหา
-  blink = [[cx, cy, rx, ry]] ตาแต่ละข้าง · talk = [x, y, w] รอยปิดปาก · head = [[คอx, คอy, รัศมี, องศา]]
+  blink = [[cx, cy, rx, ry]] ช่องตา (ใต้เส้นขนตาบน) · talk = [x, y, w, โค้งยิ้ม] รอยปิดปาก · head = [[คอx, คอy, รัศมี, องศา]]
   train = {"poly": [[x,y],...], "start": 0.8, "dur": 4.5, "shift": [0.2, -0.01], "shrink": 0.6}
   rain = {"drops": 140, "angle": 12, "region": [0,0,1,0.5]} · grade/gradeEnd = {"temp": -0.12, "sat": 0.85, "vignette": 0.35}
 """
@@ -336,16 +336,19 @@ def talk_envelope(audio, t0, n, fps):
 
 class Talker:
     """ปากขยับตามเสียงพากย์: ขากรรไกร/ริมฝีปากล่างเลื่อนลงตามความดัง + ช่องปากด้านใน (มีฟันบนเมื่อเปิดกว้าง)
-    mouth: [x, y, w] จุดกึ่งกลางรอยปิดปาก และความกว้างช่วงที่ขยับ (สัดส่วนความกว้างภาพ)"""
+    mouth: [x, y, w, curve] จุดกึ่งกลางรอยปิดปาก ความกว้างช่วงที่ขยับ (สัดส่วนความกว้างภาพ) และความโค้งรอยยิ้ม (ไม่ใส่ = 0)"""
 
     def __init__(self, mouth, w, h, env):
         self.mx, self.my, self.mw = mouth[0] * w, mouth[1] * h, mouth[2] * w
+        curve = float(mouth[3]) if len(mouth) > 3 else 0.0  # ปากยิ้ม: มุมปากสูงกว่ากลาง (สัดส่วน w)
         x0, x1 = int(max(0, self.mx - 0.9 * self.mw)), int(min(w, self.mx + 0.9 * self.mw + 1))
         y0, y1 = int(max(0, self.my - 0.35 * self.mw)), int(min(h, self.my + 1.25 * self.mw + 1))
         self.box = (y0, y1, x0, x1)
         self.yy, self.xx = np.mgrid[y0:y1, x0:x1].astype(np.float32)
-        rel = (self.yy - self.my) / self.mw
-        self.wgt = (np.exp(-((self.xx - self.mx) / (0.42 * self.mw)) ** 2) * soft(rel / 0.12)
+        self.line = self.my - curve * self.mw * ((self.xx - self.mx) / (0.5 * self.mw)) ** 2  # รอยปิดปากโค้งตามรอยยิ้ม
+        rel = (self.yy - self.line) / self.mw
+        # ริมฝีปากล่างทั้งชิ้นเลื่อนลง (ขอบคมที่รอยปิดปาก) แล้วค่อย ๆ หมดแรงที่คาง
+        self.wgt = (np.exp(-((self.xx - self.mx) / (0.42 * self.mw)) ** 2) * soft(rel / 0.025)
                     * soft((1.15 - rel) / 0.45)).astype(np.float32)
         self.env = env
         self.mouth = np.array([0.30, 0.10, 0.11], np.float32)
@@ -360,12 +363,12 @@ class Talker:
         patch = cur[y0:y1, x0:x1].copy()
         warped = remap(patch, self.xx - x0, self.yy - d * self.wgt - y0)
         ax, ay = self.mw * (0.15 + 0.09 * o), max(1.0, 0.45 * d)
-        e = ((self.xx - self.mx) / ax) ** 2 + ((self.yy - (self.my + 0.5 * d)) / ay) ** 2
-        inner = (np.clip((1 - e) / 0.45, 0, 1) * 0.92)[..., None]          # ขอบนุ่ม กลืนกับริมฝีปาก
-        depth = np.clip((self.yy - self.my) / max(1.0, d), 0, 1)[..., None]  # ด้านล่างช่องปากมืดกว่า
+        e = ((self.xx - self.mx) / ax) ** 2 + ((self.yy - (self.line + 0.5 * d)) / ay) ** 2
+        inner = (np.clip((1 - e) / 0.3, 0, 1) * 0.95)[..., None]           # ขอบนุ่ม กลืนกับริมฝีปาก
+        depth = np.clip((self.yy - self.line) / max(1.0, d), 0, 1)[..., None]  # ด้านล่างช่องปากมืดกว่า
         col = self.mouth * (1.15 - 0.35 * depth)
         if o > 0.35:  # ฟันบนจาง ๆ เฉพาะตอนอ้ากว้าง
-            tm = (np.clip((self.my + 0.22 * d - self.yy) / 2.0, 0, 1) * min(1.0, (o - 0.35) / 0.4) * 0.55)[..., None]
+            tm = (np.clip((self.line + 0.22 * d - self.yy) / 2.0, 0, 1) * min(1.0, (o - 0.35) / 0.4) * 0.55)[..., None]
             col = col * (1 - tm) + self.teeth * tm
         cur[y0:y1, x0:x1] = warped * (1 - inner) + col * inner
 
