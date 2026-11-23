@@ -23,9 +23,8 @@
 ## ติดตั้งและทดสอบ
 
 ```bash
-sudo apt-get install -y ffmpeg            # จำเป็น (ฟอนต์ Kanit แนบมากับ skill แล้ว)
-pip install numpy pillow pytest           # opencv-python ไม่บังคับ (ทำให้ animate_still เร็วขึ้น 3–4 เท่า)
-python3 -m py_compile .claude/skills/*/scripts/*.py
+bash scripts/codex-setup.sh               # ffmpeg + numpy pillow pytest opencv-python-headless + ตรวจ syntax ทุกสคริปต์
+                                          # (ใช้เป็น "Setup script" ของ environment ใน ChatGPT Codex ได้เลย · ฟอนต์ Kanit แนบมากับ skill แล้ว)
 python3 .claude/skills/social-video-studio/scripts/render.py .claude/skills/social-video-studio/templates/project.example.json --out /tmp/out
 python3 .claude/skills/cinematic-image-to-video/scripts/animate_still.py <ภาพ.png> /tmp/a.mp4 --seconds 2 --size 540x960 --fx '{"twinkle":1,"particles":20}'
 python3 .claude/skills/cinematic-image-to-video/scripts/check_i2v.py --video /tmp/a.mp4 --format 9x16
