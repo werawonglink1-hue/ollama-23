@@ -100,8 +100,11 @@ def main(argv=None):
     if not todo:
         print("ไม่มีฉากที่ต้องทำ (ใช้ --scenes all หรือ --redo)")
         return 0
+    _, _, starts, durs = render.scene_windows(scenes, style, fps)  # ช่วงเวลาจริงของแต่ละฉากในคลิป (รวมทรานซิชัน)
+    voice = clip.get("voice")
+    vpath = (voice if os.path.isabs(voice) else os.path.join(pdir, voice)) if voice else None
     for j, sc, m, still in todo:
-        dur = max(1.0, sc.end - sc.start) + 0.25
+        dur = max(1.0, durs[j]) + 0.08
         cam = render.camera_of(sc, j, style)
         out_rel = f"media/clip{a.clip}-scene{j + 1}-{a.engine}.mp4"
         out = os.path.join(pdir, out_rel)
@@ -110,7 +113,10 @@ def main(argv=None):
         if a.engine == "local":
             import animate_still
             fx = m.get("localFx") or auto_fx(sc)
-            animate_still.animate(src, out, dur, cam, SIZES.get(fmt, SIZES["9x16"]), fps, fx, seed)
+            if fx.get("talk") and not (vpath and os.path.exists(vpath)):
+                print(f"  ⚠ ฉาก {j + 1}: ไม่มีไฟล์เสียงพากย์ ปากจะไม่ขยับ (ทำ voice_align.py ก่อน)", file=sys.stderr)
+            animate_still.animate(src, out, dur, cam, SIZES.get(fmt, SIZES["9x16"]), fps, fx, seed,
+                                  audio=vpath, audio_t0=starts[j])
             gen = "local-2.5d (animate_still.py)"
         else:
             import comfy_i2v

@@ -10,6 +10,7 @@
 - ภาพ: scenes[j].media (รูป/วิดีโอ) ไม่มีก็สร้างภาพแทนที่ให้
 - เสียง: clips[i].voice (ไฟล์พากย์ เริ่มที่วินาที 0; ทำจังหวะ/timings ด้วย voice_align.py) + project.musicFile · ปรับความดังรวม -14 LUFS (2 รอบ)
   หรือเพลงสังเคราะห์ตาม project.music + เสียงประกอบตาม {เสียง: ...} และตอนเปลี่ยนฉาก (project.sfxFiles หรือสังเคราะห์)
+  + เสียงบรรยากาศต่อฉาก clips[i].ambience (ทำด้วย ambience.py · ปิดเสียงวูบตอนเปลี่ยนฉากด้วย project.transitionSfx = false)
 - ภาพคนแบบ PNG พื้นหลังโปร่งใสในฉาก "ภาพ: วงกลม" จะกลายเป็นสติกเกอร์ขอบขาวแบบคลิปตัวอย่าง
 - ซับ: จาก script + clips[i].timings (ถ้ามี จากโหมดแตะเพื่อซิงก์) ไม่งั้นประมาณจากความเร็วอ่าน
 """
@@ -502,6 +503,8 @@ def synth_music(path, seconds, kind="musicbox", sr=22050):
 
 # ---------- เสียงประกอบ (SFX) ----------
 def sfx_kind(text):
+    if any(k in text for k in ("สั่น", "โทรศัพท์", "buzz", "vibrat")):
+        return "buzz"
     if "ลม" in text:
         return "wind"
     if "ฝน" in text:
@@ -523,6 +526,15 @@ def synth_sfx(kind, sr=22050):
             for i in range(st, n):
                 t = (i - st) / sr
                 out[i] += 0.22 * math.exp(-t * 3.2) * math.sin(2 * math.pi * f * t)
+    elif kind == "buzz":  # โทรศัพท์สั่น 3 ครั้ง: เสียงหึ่งความถี่ต่ำ + เสียงสั่นกระทบพื้นผิว
+        on, off = int(0.38 * sr), int(0.22 * sr)
+        for _ in range(3):
+            for i in range(on):
+                t = i / sr
+                env = min(1.0, i / (0.02 * sr)) * min(1.0, (on - i) / (0.03 * sr))
+                x = sum(math.sin(2 * math.pi * 165 * k * t) / k for k in (1, 3, 5, 7))
+                out.append(0.30 * env * x * (0.75 + 0.25 * math.sin(2 * math.pi * 31 * t)) + 0.05 * env * rnd.uniform(-1, 1))
+            out.extend([0.0] * off)
     elif kind == "pop":
         n = int(0.12 * sr)
         ph = 0.0
@@ -598,6 +610,28 @@ def concat(segs, out):
     run(["ffmpeg", "-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", lst, "-c", "copy", out])
 
 
+def scene_windows(scenes, style, fps):
+    """ทรานซิชันเข้าแต่ละฉาก (j ≥ 1) ตาม "เปลี่ยน:" หรือวนตามสไตล์ เวลาซ้อนอยู่กึ่งกลางจุดเปลี่ยนฉาก (ซับไม่เลื่อน)
+    คืน (kinds, lens, starts, durs): ช่วงภาพของฉาก j เริ่มที่ starts[j] ในคลิปจริง ยาว durs[j] วินาที
+    (ใช้ร่วมกับ i2v_free.py ให้วิดีโอต่อฉากยาวพอดีและปากตรงเสียง)"""
+    cycle = XFADE_CYCLE.get(style, ["fade"])
+    kinds, lens = [None], [0.0]
+    for j in range(1, len(scenes)):
+        want = XFADE.get(str((scenes[j].meta or {}).get("transition", "")).strip().lower())
+        kind = want or cycle[(j - 1) % len(cycle)]
+        short = min(scenes[j - 1].end - scenes[j - 1].start, scenes[j].end - scenes[j].start)
+        D = min(XFADE_LEN.get(kind, 0.4), short * 0.4)
+        if kind == "cut" or D < 2.0 / fps:
+            kind, D = "fade", 1.0 / fps  # ตัดตรง (ซ้อน 1 เฟรม)
+        kinds.append(kind)
+        lens.append(D)
+    starts, durs = [], []
+    for j, s in enumerate(scenes):
+        starts.append(max(0.0, s.start - lens[j] / 2) if j > 0 else 0.0)
+        durs.append((s.end - s.start) + (lens[j] / 2 if j > 0 else 0) + (lens[j + 1] / 2 if j + 1 < len(scenes) else 0))
+    return kinds, lens, starts, durs
+
+
 def render_clip(project, ci, clip, fmt, outdir, fps, font):
     w, h = SCALE[fmt]
     style = clip.get("visualStyle") or project.get("visualStyle", "pastel3d")
@@ -626,21 +660,10 @@ def render_clip(project, ci, clip, fmt, outdir, fps, font):
 
     with tempfile.TemporaryDirectory() as tmp:
         video = os.path.join(tmp, "video.mp4")
-        # ทรานซิชันเข้าแต่ละฉาก (j ≥ 1): ตามบรรทัดฉาก "เปลี่ยน:" หรือวนตามสไตล์; เวลาซ้อนอยู่กึ่งกลางจุดเปลี่ยนฉาก (ซับไม่เลื่อน)
-        cycle = XFADE_CYCLE.get(style, ["fade"])
-        kinds, lens = [None], [0.0]
-        for j in range(1, len(scenes)):
-            want = XFADE.get(str((scenes[j].meta or {}).get("transition", "")).strip().lower())
-            kind = want or cycle[(j - 1) % len(cycle)]
-            short = min(scenes[j - 1].end - scenes[j - 1].start, scenes[j].end - scenes[j].start)
-            D = min(XFADE_LEN.get(kind, 0.4), short * 0.4)
-            if kind == "cut" or D < 2.0 / fps:
-                kind, D = "fade", 1.0 / fps  # ตัดตรง (ซ้อน 1 เฟรม)
-            kinds.append(kind)
-            lens.append(D)
+        kinds, lens, _, durs = scene_windows(scenes, style, fps)
         segs = []
         for j, s in enumerate(scenes):
-            dur = (s.end - s.start) + (lens[j] / 2 if j > 0 else 0) + (lens[j + 1] / 2 if j + 1 < len(scenes) else 0)
+            dur = durs[j]
             if collage:
                 segs.append(collage_segment(tmp, j, s, dur, w, h, fps, ci, framed, media_of(j)))
             else:
@@ -672,12 +695,18 @@ def render_clip(project, ci, clip, fmt, outdir, fps, font):
             tracks.append((f"[{n}:a]aresample=44100,volume={vol},afade=t=out:st={max(0, total - 2):.2f}:d=2", "[m]"))
             n += 1
         cues = [(c.start, sfx_kind(x)) for c in chunks for x in c.sfx]
-        cues += [(s.start, "paper" if collage else "whoosh") for s in scenes[1:]]
+        if project.get("transitionSfx", True):  # ปิดได้สำหรับเรื่องเล่าเงียบ ๆ ที่มีเสียงบรรยากาศแล้ว
+            cues += [(s.start, "paper" if collage else "whoosh") for s in scenes[1:]]
         if cues and project.get("sfx", True):
             sfx_path = os.path.join(tmp, "sfx.wav")
             build_sfx_track(sfx_path, total, cues, project.get("sfxFiles"))
             inputs += ["-i", sfx_path]
             tracks.append((f"[{n}:a]aresample=44100,volume={0.55 if voice else 0.8}", "[x]"))
+            n += 1
+        amb = clip.get("ambience")  # เสียงบรรยากาศต่อฉาก (ambience.py)
+        if amb and os.path.exists(amb):
+            inputs += ["-i", amb]
+            tracks.append((f"[{n}:a]aresample=44100,volume={float(project.get('ambienceVolume', 1.0))}", "[b]"))
             n += 1
         sub = f"ass='{ff_filter_path(ass_path)}'" + (f":fontsdir='{ff_filter_path(bs.FONTS_DIR)}'" if os.path.isdir(bs.FONTS_DIR) else "")
         grade = GRADES.get(project.get("grade") or GRADE_DEFAULT.get(style, "none"), "")
@@ -742,6 +771,8 @@ def main(argv=None):
     for c in project.get("clips", []):  # path สัมพัทธ์เทียบกับไฟล์ project
         if c.get("voice") and not os.path.isabs(c["voice"]):
             c["voice"] = os.path.join(pdir, c["voice"])
+        if c.get("ambience") and not os.path.isabs(c["ambience"]):
+            c["ambience"] = os.path.join(pdir, c["ambience"])
         for s in c.get("scenes") or []:
             if isinstance(s, dict) and s.get("media") and not os.path.isabs(s["media"]):
                 s["media"] = os.path.join(pdir, s["media"])
