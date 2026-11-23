@@ -257,8 +257,9 @@ class Train:
 
 
 class Blinker:
-    """กะพริบตาเป็นธรรมชาติ (ทุก 2.4–4.4 วิ บางครั้งกะพริบสองครั้ง): เปลือกตาบนเลื่อนลงทับตา + เส้นขนตาตามขอบเปลือก
-    eyes: [[cx, cy, rx, ry], ...] สัดส่วนภาพ (rx เทียบความกว้าง ry เทียบความสูง) ครอบตาขาว+ตาดำ+ขอบขนตาบน"""
+    """กะพริบตาเป็นธรรมชาติ (ทุก 2.4–4.4 วิ บางครั้งกะพริบสองครั้ง): ดึงผิวเปลือกตาด้านบน "ยืดลงมา" ปิดตา
+    เส้นขนตาบนจึงเลื่อนลงตามขอบเปลือกตาเอง ได้แสงเงาเดิมของภาพ ไม่ใช่การระบายสีทับ
+    eyes: [[cx, cy, rx, ry], ...] สัดส่วนภาพ (rx เทียบความกว้าง ry เทียบความสูง) ให้พอดีช่องตา (ตาขาว+ตาดำ)"""
 
     def __init__(self, eyes, base, w, h, seconds, seed=7):
         rng = np.random.default_rng(seed + 21)
@@ -271,13 +272,15 @@ class Blinker:
         self.eyes = []
         for cx, cy, rx, ry in eyes:
             cx, cy, rx, ry = cx * w, cy * h, rx * w, ry * h
-            x0, x1 = int(max(0, cx - 1.25 * rx)), int(min(w, cx + 1.25 * rx + 1))
-            y0, y1 = int(max(0, cy - 1.6 * ry)), int(min(h, cy + 1.45 * ry + 1))
+            x0, x1 = int(max(0, cx - 1.1 * rx)), int(min(w, cx + 1.1 * rx + 1))
+            y0, y1 = int(max(0, cy - 2.2 * ry)), int(min(h, cy + 1.3 * ry + 1))
             yy, xx = np.mgrid[y0:y1, x0:x1].astype(np.float32)
-            ex, ey = (xx - cx) / rx, (yy - cy) / ry
-            band = base[int(max(0, cy - 2.3 * ry)):int(max(1, cy - 1.45 * ry)), int(max(0, cx - 0.5 * rx)):int(cx + 0.5 * rx)]
-            lid = np.median(band.reshape(-1, 3), axis=0) if band.size else np.array([0.85, 0.65, 0.55])
-            self.eyes.append((y0, y1, x0, x1, ex, ey, np.asarray(lid, np.float32)))
+            ex = np.clip((xx[0] - cx) / rx, -1, 1)
+            half = ry * np.sqrt(np.maximum(0.0, 1 - ex * ex))
+            top, bot = cy - half, cy + half              # ขอบบน/ล่างของช่องตาในแต่ละคอลัมน์
+            ext = top - 0.9 * ry                         # ผิวเปลือกตาที่จะยืดลงมา
+            wcol = soft((1 - np.abs((xx[0] - cx) / rx)) / 0.18)  # มุมตาเปลี่ยนน้อย ไม่ให้ขอบแตก
+            self.eyes.append((y0, y1, x0, x1, xx - x0, yy, top, bot, ext, wcol))
 
     def closure(self, t):
         c = 0.0
@@ -295,17 +298,14 @@ class Blinker:
         c = self.closure(t)
         if c < 0.02:
             return
-        dark = np.array([0.10, 0.07, 0.07], np.float32)
-        for y0, y1, x0, x1, ex, ey, lid in self.eyes:
-            inside = np.clip((1.12 - np.sqrt(ex * ex + ey * ey)) / 0.14, 0, 1)
-            edge = -1.15 + c * 2.25 * (1 - 0.32 * ex * ex)  # ขอบเปลือกตา (โค้งลงตรงกลาง)
-            cover = (np.clip((edge - ey) / 0.12, 0, 1) * inside)[..., None]
-            shade = lid * (0.88 + 0.12 * np.clip((edge - ey) / 1.2, 0, 1))[..., None]
-            patch = cur[y0:y1, x0:x1]
-            patch[:] = patch * (1 - cover) + shade * cover
-            if c > 0.3:
-                lash = (np.exp(-((ey - edge) / 0.09) ** 2) * inside * min(1.0, (c - 0.3) / 0.4) * 0.85)[..., None]
-                patch[:] = patch * (1 - lash) + dark * lash
+        for y0, y1, x0, x1, px, yy, top, bot, ext, wcol in self.eyes:
+            lid = top + c * (bot - top) * 0.96                    # ขอบเปลือกตาใหม่
+            span = np.maximum(1.0, lid - ext)
+            stretched = ext + (yy - ext) * (top - ext) / span     # แถว ext..lid ← ผิว ext..top (ยืด)
+            src_y = np.where((yy >= ext) & (yy <= lid), stretched, yy)
+            src_y = yy + (src_y - yy) * wcol                       # มุมตาค่อย ๆ จางกลับเป็นภาพเดิม
+            patch = cur[y0:y1, x0:x1].copy()
+            cur[y0:y1, x0:x1] = remap(patch, px, src_y - y0)
 
 
 def talk_envelope(audio, t0, n, fps):
@@ -349,21 +349,24 @@ class Talker:
                     * soft((1.15 - rel) / 0.45)).astype(np.float32)
         self.env = env
         self.mouth = np.array([0.30, 0.10, 0.11], np.float32)
-        self.teeth = np.array([0.93, 0.89, 0.87], np.float32)
+        self.teeth = np.array([0.82, 0.76, 0.74], np.float32)
 
     def apply(self, cur, i):
         o = float(self.env[i]) if i < len(self.env) else 0.0
         if o < 0.04:
             return
-        d = o * 0.17 * self.mw
+        d = o * 0.22 * self.mw
         y0, y1, x0, x1 = self.box
         patch = cur[y0:y1, x0:x1].copy()
         warped = remap(patch, self.xx - x0, self.yy - d * self.wgt - y0)
-        ax, ay = 0.24 * self.mw * (0.85 + 0.15 * o), max(1.0, 0.5 * d)
+        ax, ay = self.mw * (0.15 + 0.09 * o), max(1.0, 0.45 * d)
         e = ((self.xx - self.mx) / ax) ** 2 + ((self.yy - (self.my + 0.5 * d)) / ay) ** 2
-        inner = np.clip((1 - e) / 0.25, 0, 1)[..., None]
-        tm = (np.clip((self.my + 0.30 * d - self.yy) / 1.5, 0, 1) * (min(1.0, (o - 0.3) / 0.3) if o > 0.3 else 0.0))[..., None]
-        col = self.mouth * (1 - tm) + self.teeth * tm
+        inner = (np.clip((1 - e) / 0.45, 0, 1) * 0.92)[..., None]          # ขอบนุ่ม กลืนกับริมฝีปาก
+        depth = np.clip((self.yy - self.my) / max(1.0, d), 0, 1)[..., None]  # ด้านล่างช่องปากมืดกว่า
+        col = self.mouth * (1.15 - 0.35 * depth)
+        if o > 0.35:  # ฟันบนจาง ๆ เฉพาะตอนอ้ากว้าง
+            tm = (np.clip((self.my + 0.22 * d - self.yy) / 2.0, 0, 1) * min(1.0, (o - 0.35) / 0.4) * 0.55)[..., None]
+            col = col * (1 - tm) + self.teeth * tm
         cur[y0:y1, x0:x1] = warped * (1 - inner) + col * inner
 
 
