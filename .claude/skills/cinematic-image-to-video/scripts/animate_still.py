@@ -279,8 +279,7 @@ class Blinker:
             half = ry * np.sqrt(np.maximum(0.0, 1 - ex * ex))
             top, bot = cy - half, cy + half              # ขอบบน/ล่างของช่องตาในแต่ละคอลัมน์
             ext = top - 0.9 * ry                         # ผิวเปลือกตาที่จะยืดลงมา
-            wcol = soft((1 - np.abs((xx[0] - cx) / rx)) / 0.18)  # มุมตาเปลี่ยนน้อย ไม่ให้ขอบแตก
-            self.eyes.append((y0, y1, x0, x1, xx - x0, yy, top, bot, ext, wcol))
+            self.eyes.append((y0, y1, x0, x1, xx - x0, yy, top, bot, ext))  # ปลายตา half → 0 จึงต่อเนื่องเอง
 
     def closure(self, t):
         c = 0.0
@@ -298,12 +297,11 @@ class Blinker:
         c = self.closure(t)
         if c < 0.02:
             return
-        for y0, y1, x0, x1, px, yy, top, bot, ext, wcol in self.eyes:
-            lid = top + c * (bot - top) * 0.96                    # ขอบเปลือกตาใหม่
+        for y0, y1, x0, x1, px, yy, top, bot, ext in self.eyes:
+            lid = top + c * (bot - top) * 0.97                    # ขอบเปลือกตาใหม่
             span = np.maximum(1.0, lid - ext)
             stretched = ext + (yy - ext) * (top - ext) / span     # แถว ext..lid ← ผิว ext..top (ยืด)
             src_y = np.where((yy >= ext) & (yy <= lid), stretched, yy)
-            src_y = yy + (src_y - yy) * wcol                       # มุมตาค่อย ๆ จางกลับเป็นภาพเดิม
             patch = cur[y0:y1, x0:x1].copy()
             cur[y0:y1, x0:x1] = remap(patch, px, src_y - y0)
 
