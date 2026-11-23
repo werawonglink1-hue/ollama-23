@@ -51,8 +51,9 @@ def drift(n, fps, seed, freq=0.33):
 
 def remap(src, mx, my):
     """สุ่มตัวอย่างแบบ bilinear: src[H,W,C] float32 ที่พิกัด (mx, my)"""
-    if cv2 is not None:
-        return cv2.remap(src, mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
+    if cv2 is not None:  # OpenCV รับเฉพาะแผนที่ float32
+        return cv2.remap(src, mx.astype(np.float32, copy=False), my.astype(np.float32, copy=False),
+                         cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
     h, w = src.shape[:2]
     mx = np.clip(mx, 0, w - 1.001)
     my = np.clip(my, 0, h - 1.001)
@@ -119,9 +120,9 @@ def camera_path(kind, n, fps, w, h, focus=None, seed=7):
         cx += 0.0022 * w * dx[i]
         cy += 0.0018 * h * dy[i]
         hw, hh = w / (2 * z), h / (2 * z)  # ไม่ให้มองเลยขอบภาพ
-        zs.append(z)
-        cxs.append(min(max(cx, hw), w - hw))
-        cys.append(min(max(cy, hh), h - hh))
+        zs.append(float(z))  # float ธรรมดา: ไม่ให้ numpy float64 ลากทั้งภาพเป็น float64
+        cxs.append(float(min(max(cx, hw), w - hw)))
+        cys.append(float(min(max(cy, hh), h - hh)))
     return zs, cxs, cys
 
 
